@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>نقلي — نظام إدارة الأسطول</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<style>
+/* ═══════════════════════════════════════════
+   DESIGN SYSTEM
+═══════════════════════════════════════════ */
+:root {
+  --bg:       #060b14;
+  --surface:  #0c1422;
+  --card:     #111d2e;
+  --card2:    #162438;
+  --border:   #1c2e44;
+  --border2:  #243d58;
+  --accent:   #f59e0b;
+  --accent2:  #fbbf24;
+  --cyan:     #06b6d4;
+  --green:    #10b981;
+  --red:      #ef4444;
+  --purple:   #8b5cf6;
+  --text:     #e8f0f8;
+  --text2:    #a0b4c8;
+  --muted:    #4a6480;
+  --r: 16px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'Cairo',sans-serif;display:flex;flex-direction:column;height:100dvh;}
+
+/* ══ SCREENS ══ */
+.screen{display:none;flex-direction:column;height:100dvh;overflow:hidden;}
+.screen.active{display:flex;}
+
+/* ══════════════════════════════
+   LANDING
+══════════════════════════════ */
+#landing {
+  align-items:center;justify-content:center;padding:32px 24px;gap:20px;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 0%,rgba(245,158,11,.12) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 40% at 90% 90%,rgba(6,182,212,.09) 0%,transparent 60%),
+    linear-gradient(180deg,#060b14 0%,#080f1c 100%);
+  position:relative;overflow:hidden;
+}
+.land-grid {
+  position:absolute;inset:0;
+  background-image:linear-gradient(rgba(6,182,212,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(6,182,212,.04) 1px,transparent 1px);
+  background-size:40px 40px;
+  mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 0%,transparent 100%);
+}
+.land-logo {
+  width:90px;height:90px;
+  background:linear-gradient(135deg,var(--accent),#d97706);
+  border-radius:28px;display:flex;align-items:center;justify-content:center;
+  font-size:42px;box-shadow:0 0 60px rgba(245,158,11,.4),0 8px 32px rgba(245,158,11,.3);
+  animation:logoFloat 4s ease infinite;position:relative;z-index:1;
+}
+@keyframes logoFloat{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-10px) rotate(2deg)}}
+.land-name{font-size:36px;font-weight:900;letter-spacing:-1.5px;position:relative;z-index:1;}
+.land-name span{color:var(--accent);}
+.land-tag{font-size:13px;color:var(--text2);text-align:center;line-height:1.7;position:relative;z-index:1;}
+.land-badges{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;position:relative;z-index:1;}
+.badge{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;border:1px solid;}
+.badge-g{background:rgba(16,185,129,.1);color:var(--green);border-color:rgba(16,185,129,.3);}
+.badge-b{background:rgba(6,182,212,.1);color:var(--cyan);border-color:rgba(6,182,212,.3);}
+.badge-a{background:rgba(245,158,11,.1);color:var(--accent);border-color:rgba(245,158,11,.3);}
+
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:360px;position:relative;z-index:1;}
+.role-card{
+  padding:22px 12px 18px;border-radius:20px;border:2px solid var(--border);
+  background:var(--card);cursor:pointer;transition:all .35s;text-align:center;
+  position:relative;overflow:hidden;
+}
+.role-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(245,158,11,.06),transparent);opacity:0;transition:.3s;}
+.role-card.sel,.role-card:active{border-color:var(--accent);background:rgba(245,158,11,.07);}
+.role-card.sel::before{opacity:1;}
+.rc-icon{font-size:38px;display:block;margin-bottom:10px;}
+.rc-name{font-size:15px;font-weight:800;}
+.rc-desc{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.5;}
+
+/* admin card */
+.admin-card{
+  width:100%;max-width:360px;padding:16px 18px;border-radius:18px;
+  border:2px solid var(--border);background:var(--card);
+  cursor:pointer;transition:all .35s;display:flex;align-items:center;gap:14px;
+  position:relative;z-index:1;
+}
+.admin-card.sel{border-color:var(--purple);background:rgba(139,92,246,.06);}
+.admin-card-icon{width:48px;height:48px;background:rgba(139,92,246,.15);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
+.admin-card-title{font-size:15px;font-weight:800;}
+.admin-card-sub{font-size:11px;color:var(--muted);}
+
+.main-btn{
+  width:100%;max-width:360px;padding:17px;border-radius:18px;border:none;
+  font-family:'Cairo',sans-serif;font-size:17px;font-weight:900;cursor:pointer;
+  transition:all .3s;position:relative;z-index:1;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.main-btn-acc{background:linear-gradient(135deg,var(--accent),#d97706);color:#000;box-shadow:0 4px 24px rgba(245,158,11,.4);}
+.main-btn-acc:disabled{opacity:.3;cursor:not-allowed;box-shadow:none;}
+.main-btn-acc:not(:disabled):hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(245,158,11,.5);}
+.main-btn-sec{background:var(--card);border:1px solid var(--border);color:var(--text2);font-size:14px;}
+
+/* ══════════════════════════════
+   DRIVER SHARE SCREEN
+══════════════════════════════ */
+#driverShare{
+  align-items:center;justify-content:center;padding:32px 22px;gap:18px;
+  background:radial-gradient(ellipse 70% 50% at 50% 0%,rgba(245,158,11,.08) 0%,transparent 60%),var(--bg);
+}
+.code-card{
+  width:100%;max-width:360px;background:var(--card);
+  border:2px solid rgba(245,158,11,.4);border-radius:24px;padding:28px 20px;text-align:center;
+  box-shadow:0 0 40px rgba(245,158,11,.1);
+}
+.code-label{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;}
+.code-value{font-size:38px;font-weight:900;color:var(--accent);letter-spacing:6px;margin-bottom:8px;font-family:'Tajawal',monospace;}
+.code-hint{font-size:12px;color:var(--text2);line-height:1.7;}
+.share-btn{
+  width:100%;margin-top:16px;padding:12px;border-radius:14px;
+  border:1px solid rgba(245,158,11,.3);background:rgba(245,158,11,.1);
+  color:var(--accent);font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;
+  transition:all .3s;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.share-btn:hover{background:rgba(245,158,11,.18);}
+
+.conn-pill{display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:14px;font-size:13px;font-weight:700;}
+.conn-pill.waiting{background:rgba(74,100,128,.15);color:var(--muted);border:1px solid rgba(74,100,128,.2);}
+.conn-pill.connected{background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.3);}
+.cdot{width:8px;height:8px;border-radius:50%;background:currentColor;animation:pdot 1.4s ease infinite;}
+@keyframes pdot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.6)}}
+
+/* ══════════════════════════════
+   PASSENGER JOIN
+══════════════════════════════ */
+#passJoin{
+  align-items:center;justify-content:center;padding:32px 22px;gap:16px;
+  background:radial-gradient(ellipse 70% 50% at 50% 0%,rgba(6,182,212,.07) 0%,transparent 60%),var(--bg);
+}
+.inp-lbl{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;align-self:flex-start;width:100%;max-width:360px;}
+.code-inp{
+  width:100%;max-width:360px;background:var(--card);border:2px solid var(--border);
+  border-radius:18px;padding:18px;color:var(--text);font-family:'Tajawal',monospace;
+  font-size:30px;font-weight:800;outline:none;text-align:center;letter-spacing:5px;
+  text-transform:uppercase;transition:border-color .3s;
+}
+.code-inp:focus{border-color:var(--accent);}
+.code-inp::placeholder{color:var(--muted);font-size:14px;letter-spacing:2px;}
+.conn-log{
+  width:100%;max-width:360px;background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:14px;font-size:13px;color:var(--text2);min-height:52px;
+  line-height:1.8;text-align:center;
+}
+
+/* ══════════════════════════════
+   LINE SELECT (passenger)
+══════════════════════════════ */
+#lineSelect{
+  align-items:center;justify-content:center;padding:24px 20px;gap:14px;
+  background:var(--bg);overflow-y:auto;
+}
+.line-card{
+  width:100%;max-width:380px;background:var(--card);border:1px solid var(--border);
+  border-radius:18px;padding:16px;display:flex;align-items:center;gap:14px;
+  cursor:pointer;transition:all .3s;
+}
+.line-card:hover,.line-card.sel{border-color:var(--cyan);background:rgba(6,182,212,.06);}
+.line-num{
+  width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+  font-size:18px;font-weight:900;flex-shrink:0;font-family:'Tajawal',sans-serif;
+}
+.line-info-name{font-size:15px;font-weight:800;}
+.line-info-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.line-stops{font-size:11px;color:var(--cyan);font-weight:700;margin-top:4px;}
+
+/* ══════════════════════════════
+   MAIN APP
+══════════════════════════════ */
+#mainApp{flex-direction:column;}
+
+/* Header */
+.hdr{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:10px 16px;display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;z-index:300;
+}
+.hdr-l{display:flex;align-items:center;gap:10px;}
+.hdr-ico{font-size:22px;}
+.hdr-title{font-size:15px;font-weight:900;}
+.hdr-sub{font-size:11px;color:var(--muted);}
+.hdr-badge{
+  background:var(--card);border:1px solid var(--border);border-radius:8px;
+  padding:5px 10px;font-size:11px;font-weight:800;letter-spacing:1px;cursor:pointer;
+  font-family:'Tajawal',monospace;
+}
+.hdr-badge.live{color:var(--green);border-color:rgba(16,185,129,.3);}
+.hdr-badge.code{color:var(--accent);}
+
+/* Map */
+#map{flex:1;z-index:1;min-height:0;}
+.leaflet-container{background:#080f1c!important;}
+
+/* Bottom Panel */
+.btm{
+  background:var(--surface);border-top:1px solid var(--border);
+  padding:14px 16px 24px;flex-shrink:0;z-index:200;
+  max-height:55vh;overflow-y:auto;
+}
+
+/* Pills */
+.status-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.spill{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;}
+.spill.live{background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.25);}
+.spill.off{background:rgba(74,100,128,.12);color:var(--muted);border:1px solid rgba(74,100,128,.2);}
+.spill.warn{background:rgba(245,158,11,.12);color:var(--accent);border:1px solid rgba(245,158,11,.25);}
+.sdot{width:7px;height:7px;border-radius:50%;background:currentColor;animation:pdot 1.4s ease infinite;}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
+.sbox{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 6px;text-align:center;}
+.sv{font-size:18px;font-weight:900;color:var(--accent);line-height:1;font-family:'Tajawal',sans-serif;}
+.sl{font-size:9px;color:var(--muted);margin-top:3px;}
+
+/* Buttons */
+.abtn{
+  width:100%;padding:15px;border-radius:14px;border:none;
+  font-family:'Cairo',sans-serif;font-size:16px;font-weight:800;
+  cursor:pointer;transition:all .3s;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.abtn-go{background:linear-gradient(135deg,var(--green),#059669);color:#fff;box-shadow:0 4px 16px rgba(16,185,129,.3);}
+.abtn-go:hover{box-shadow:0 6px 24px rgba(16,185,129,.5);}
+.abtn-stop{background:linear-gradient(135deg,var(--red),#dc2626);color:#fff;}
+.abtn-sec{background:var(--card);border:1px solid var(--border);color:var(--text);}
+.btn-row{display:flex;gap:8px;margin-top:8px;}
+
+/* Stops list */
+.stops-section{margin-top:14px;}
+.stops-title{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;}
+.stop-item{
+  display:flex;align-items:center;gap:12px;padding:11px 12px;
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  margin-bottom:7px;cursor:pointer;transition:all .3s;
+}
+.stop-item:hover{border-color:var(--border2);}
+.stop-item.next{border-color:var(--accent);background:rgba(245,158,11,.05);}
+.stop-item.passed{opacity:.45;}
+.stop-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+.stop-dot.green{background:var(--green);}
+.stop-dot.amber{background:var(--accent);animation:pdot 1s infinite;}
+.stop-dot.blue{background:transparent;border:2px solid var(--cyan);}
+.stop-dot.gray{background:transparent;border:2px solid var(--muted);}
+.stop-name{font-size:13px;font-weight:700;flex:1;}
+.stop-eta{font-size:11px;color:var(--accent);font-weight:700;background:rgba(245,158,11,.1);padding:2px 8px;border-radius:6px;}
+.stop-dist{font-size:11px;color:var(--muted);}
+
+/* Passenger card */
+.pcard{background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px;transition:all .3s;}
+.pcard.alert{border-color:var(--accent);background:rgba(245,158,11,.06);animation:alertBlink 1s ease 3;}
+@keyframes alertBlink{0%,100%{border-color:var(--accent)}50%{border-color:rgba(245,158,11,.2)}}
+.pc-top{display:flex;align-items:flex-start;justify-content:space-between;}
+.pc-name{font-size:19px;font-weight:900;}
+.pc-sub{font-size:12px;color:var(--text2);margin-top:3px;}
+.pc-ico{font-size:30px;}
+.pc-bot{display:flex;align-items:center;justify-content:space-between;margin-top:12px;gap:8px;}
+.ep{padding:5px 14px;border-radius:20px;font-size:13px;font-weight:700;}
+.ep-eta{background:rgba(6,182,212,.12);color:var(--cyan);border:1px solid rgba(6,182,212,.25);}
+.ep-dist{background:rgba(245,158,11,.1);color:var(--accent);border:1px solid rgba(245,158,11,.2);}
+.ep-spd{background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.2);}
+
+/* Line info bar */
+.line-bar{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;
+  background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;
+}
+.lb-num{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;flex-shrink:0;}
+.lb-name{font-size:13px;font-weight:700;}
+.lb-stops{font-size:11px;color:var(--muted);}
+
+/* ══════════════════════════════
+   ADMIN DASHBOARD
+══════════════════════════════ */
+#adminDash{background:var(--bg);overflow-y:auto;flex-direction:column;}
+.admin-hdr{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.admin-hdr-title{font-size:16px;font-weight:900;}
+.admin-hdr-sub{font-size:11px;color:var(--muted);}
+.admin-live{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--green);font-weight:700;}
+
+.admin-body{padding:16px;display:flex;flex-direction:column;gap:14px;flex:1;}
+
+/* Admin stats */
+.admin-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.astat{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;}
+.astat-val{font-size:28px;font-weight:900;font-family:'Tajawal',sans-serif;line-height:1;}
+.astat-lbl{font-size:12px;color:var(--muted);margin-top:4px;}
+.astat.accent .astat-val{color:var(--accent);}
+.astat.green .astat-val{color:var(--green);}
+.astat.cyan .astat-val{color:var(--cyan);}
+.astat.purple .astat-val{color:var(--purple);}
+
+/* Bus fleet list */
+.section-title{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;}
+.fleet-item{
+  background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;
+}
+.fi-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.fi-icon.live{background:rgba(16,185,129,.15);}
+.fi-icon.off{background:rgba(74,100,128,.15);}
+.fi-name{font-size:14px;font-weight:800;flex:1;}
+.fi-line{font-size:11px;color:var(--muted);}
+.fi-status{font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;}
+.fi-status.live{background:rgba(16,185,129,.15);color:var(--green);}
+.fi-status.off{background:rgba(74,100,128,.15);color:var(--muted);}
+.fi-speed{font-size:12px;color:var(--accent);font-weight:700;}
+
+/* Lines management */
+.lines-grid{display:flex;flex-direction:column;gap:8px;}
+.line-mgmt{
+  background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:14px;display:flex;align-items:center;gap:12px;
+}
+.lm-num{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;flex-shrink:0;font-family:'Tajawal',sans-serif;}
+.lm-name{font-size:13px;font-weight:800;flex:1;}
+.lm-info{font-size:11px;color:var(--muted);}
+.lm-active{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.lm-active.on{background:var(--green);box-shadow:0 0 6px var(--green);}
+.lm-active.off{background:var(--muted);}
+
+/* Admin map */
+.admin-map{height:220px;border-radius:16px;overflow:hidden;border:1px solid var(--border);}
+
+/* Back btn */
+.back-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text2);font-family:'Cairo',sans-serif;font-size:13px;font-weight:600;cursor:pointer;}
+
+/* ══════════════════════════════
+   TOAST
+══════════════════════════════ */
+#toast{
+  position:fixed;bottom:130px;left:50%;
+  transform:translateX(-50%) translateY(120px);
+  background:var(--card);border:1px solid var(--border);border-radius:18px;
+  padding:13px 18px;display:flex;align-items:center;gap:12px;
+  z-index:9999;transition:all .4s cubic-bezier(.175,.885,.32,1.275);
+  max-width:360px;width:92%;box-shadow:0 8px 40px rgba(0,0,0,.7);opacity:0;
+}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+#toast.green{border-color:rgba(16,185,129,.4);}
+#toast.amber{border-color:rgba(245,158,11,.4);}
+#toast.red{border-color:rgba(239,68,68,.4);}
+.t-ico{font-size:24px;flex-shrink:0;}
+.t-txt{font-size:14px;font-weight:700;}
+.t-sub{font-size:12px;color:var(--text2);}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════
+     1. LANDING
+════════════════════════════════════════ -->
+<div id="landing" class="screen active">
+  <div class="land-grid"></div>
+  <div class="land-logo">🚌</div>
+  <div style="text-align:center;position:relative;z-index:1;">
+    <div class="land-name">نقـ<span>لي</span></div>
+    <div class="land-tag">نظام إدارة أسطول الحافلات<br>GPS حقيقي · مسارات · محطات · لوحة تحكم</div>
+  </div>
+  <div class="land-badges">
+    <div class="badge badge-g">✓ GPS حقيقي</div>
+    <div class="badge badge-b">✓ بدون تثبيت</div>
+    <div class="badge badge-a">✓ مجاني 100%</div>
+  </div>
+
+  <div class="role-grid">
+    <div class="role-card" id="rD" onclick="pickRole('driver')">
+      <span class="rc-icon">🚌</span>
+      <div class="rc-name">السائق</div>
+      <div class="rc-desc">إرسال GPS<br>تسجيل المسار</div>
+    </div>
+    <div class="role-card" id="rP" onclick="pickRole('passenger')">
+      <span class="rc-icon">👤</span>
+      <div class="rc-name">الزبون</div>
+      <div class="rc-desc">تتبع الحافلة<br>تنبيهات صوتية</div>
+    </div>
+  </div>
+
+  <div class="admin-card" id="rA" onclick="pickRole('admin')">
+    <div class="admin-card-icon">🖥️</div>
+    <div>
+      <div class="admin-card-title">لوحة تحكم المشرف</div>
+      <div class="admin-card-sub">إدارة الأسطول · الخطوط · المحطات · التقارير</div>
+    </div>
+  </div>
+
+  <button class="main-btn main-btn-acc" id="landNext" disabled onclick="goNext()">
+    ابدأ ←
+  </button>
+</div>
+
+<!-- ════════════════════════════════════════
+     2a. DRIVER SHARE
+════════════════════════════════════════ -->
+<div id="driverShare" class="screen">
+  <div style="text-align:center;padding-top:8px;">
+    <div style="font-size:26px;font-weight:900;">رمز رحلتك 🔑</div>
+    <div style="font-size:13px;color:var(--muted);margin-top:4px;">أعطِ هذا الرمز للزبائن</div>
+  </div>
+  <div class="code-card">
+    <div class="code-label">رمز الاتصال المباشر</div>
+    <div class="code-value" id="driverCode">جارٍ...</div>
+    <div class="code-hint">الزبون يفتح التطبيق ← يختار الزبون ← يدخل هذا الرمز<br>ويتابع موقعك مباشرة على الخريطة</div>
+    <button class="share-btn" onclick="shareCode()">📤 مشاركة الرمز</button>
+  </div>
+  <div class="conn-pill waiting" id="connPill">
+    <div class="cdot"></div>
+    <span id="connTxt">في انتظار اتصال الزبائن...</span>
+  </div>
+  <button class="main-btn main-btn-acc" onclick="goToMap('driver')">🚌 ابدأ الرحلة</button>
+  <button class="main-btn main-btn-sec" onclick="showScreen('landing')">← رجوع</button>
+</div>
+
+<!-- ════════════════════════════════════════
+     2b. PASSENGER JOIN
+════════════════════════════════════════ -->
+<div id="passJoin" class="screen">
+  <div style="text-align:center;">
+    <div style="font-size:26px;font-weight:900;">أدخل رمز الرحلة 🔑</div>
+    <div style="font-size:13px;color:var(--muted);margin-top:4px;">الرمز من السائق</div>
+  </div>
+  <div class="inp-lbl">رمز الرحلة</div>
+  <input class="code-inp" id="codeInput" maxlength="20" placeholder="الصق الرمز هنا"
+    oninput="onCodeIn()" autocomplete="off" autocorrect="off" spellcheck="false">
+  <div class="conn-log" id="connLog">في انتظار إدخال الرمز...</div>
+  <button class="main-btn main-btn-acc" id="connectBtn" disabled onclick="connectToDriver()">🔗 اتصال بالحافلة</button>
+  <button class="main-btn main-btn-sec" onclick="showScreen('landing')">← رجوع</button>
+</div>
+
+<!-- ════════════════════════════════════════
+     2c. LINE SELECT (passenger)
+════════════════════════════════════════ -->
+<div id="lineSelect" class="screen">
+  <div style="text-align:center;width:100%;">
+    <div style="font-size:22px;font-weight:900;">اختر خط الحافلة 🗺️</div>
+    <div style="font-size:13px;color:var(--muted);margin-top:4px;">اختر الخط للحصول على تنبيهات المحطات</div>
+  </div>
+  <div id="linesList" style="width:100%;max-width:380px;"></div>
+  <button class="main-btn main-btn-acc" id="lineJoinBtn" disabled onclick="goToMap('passenger')">متابعة ←</button>
+  <button class="main-btn main-btn-sec" onclick="showScreen('landing')">← رجوع</button>
+</div>
+
+<!-- ════════════════════════════════════════
+     3. MAIN MAP APP
+════════════════════════════════════════ -->
+<div id="mainApp" class="screen">
+  <div class="hdr">
+    <div class="hdr-l">
+      <div class="hdr-ico" id="hIco">🚌</div>
+      <div>
+        <div class="hdr-title" id="hTitle">—</div>
+        <div class="hdr-sub" id="hSub">—</div>
+      </div>
+    </div>
+    <div class="hdr-badge" id="hBadge" onclick="shareCode()">—</div>
+  </div>
+
+  <div id="map"></div>
+
+  <!-- DRIVER PANEL -->
+  <div class="btm" id="dPanel" style="display:none;">
+    <div class="status-row">
+      <div class="spill off" id="dPill"><div class="sdot"></div><span id="dPillTxt">في الانتظار</span></div>
+      <div style="font-size:11px;color:var(--muted);" id="gpsAcc">GPS: --</div>
+    </div>
+    <div class="stats">
+      <div class="sbox"><div class="sv" id="dSpd">0</div><div class="sl">كم/س</div></div>
+      <div class="sbox"><div class="sv" id="dDst">0.0</div><div class="sl">كم</div></div>
+      <div class="sbox"><div class="sv" id="dStp">0</div><div class="sl">محطات</div></div>
+      <div class="sbox"><div class="sv" id="dPass">0</div><div class="sl">زبائن</div></div>
+    </div>
+    <button class="abtn abtn-go" id="dBtn" onclick="toggleTracking()">▶ ابدأ وأرسل موقعك</button>
+
+    <!-- Stops on route -->
+    <div class="stops-section" id="dStopsSection" style="display:none;">
+      <div class="stops-title">محطات الخط المختار</div>
+      <div id="dStopsList"></div>
+    </div>
+  </div>
+
+  <!-- PASSENGER PANEL -->
+  <div class="btm" id="pPanel" style="display:none;">
+    <div class="line-bar" id="lineBar"></div>
+    <div class="pcard" id="pCard">
+      <div class="pc-top">
+        <div>
+          <div class="pc-name" id="pName">في انتظار الحافلة...</div>
+          <div class="pc-sub" id="pSub">جارٍ الاتصال بالسائق</div>
+        </div>
+        <div class="pc-ico" id="pIco">🔴</div>
+      </div>
+      <div class="pc-bot">
+        <div class="ep ep-eta" id="pEta">⏱ --</div>
+        <div class="ep ep-dist" id="pDist">📍 --</div>
+        <div class="ep ep-spd" id="pSpd">⚡ --</div>
+      </div>
+    </div>
+    <div class="stops-section">
+      <div class="stops-title">محطات الخط</div>
+      <div id="pStopsList"></div>
+    </div>
+    <div class="btn-row">
+      <button class="abtn abtn-sec" style="flex:1;" onclick="testVoice()">🔊 صوت</button>
+      <button class="abtn abtn-sec" style="flex:1;" onclick="centerBus()">🎯 تتبع</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     4. ADMIN DASHBOARD
+════════════════════════════════════════ -->
+<div id="adminDash" class="screen">
+  <div class="admin-hdr">
+    <div>
+      <div class="admin-hdr-title">🖥️ لوحة التحكم</div>
+      <div class="admin-hdr-sub">نظام إدارة الأسطول — نقـلي</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="admin-live"><div class="sdot" style="width:8px;height:8px;"></div>مباشر</div>
+      <button class="back-btn" onclick="showScreen('landing')">← خروج</button>
+    </div>
+  </div>
+
+  <div class="admin-body">
+    <!-- Stats -->
+    <div class="admin-stats">
+      <div class="astat accent">
+        <div class="astat-val" id="adTotalBus">3</div>
+        <div class="astat-lbl">🚌 إجمالي الحافلات</div>
+      </div>
+      <div class="astat green">
+        <div class="astat-val" id="adActiveBus">2</div>
+        <div class="astat-lbl">✅ نشطة الآن</div>
+      </div>
+      <div class="astat cyan">
+        <div class="astat-val" id="adLines">4</div>
+        <div class="astat-lbl">🗺️ خطوط تشغيل</div>
+      </div>
+      <div class="astat purple">
+        <div class="astat-val" id="adPassengers">12</div>
+        <div class="astat-lbl">👤 زبائن متصلون</div>
+      </div>
+    </div>
+
+    <!-- Admin map -->
+    <div>
+      <div class="section-title">الخريطة المباشرة</div>
+      <div class="admin-map" id="adminMap"></div>
+    </div>
+
+    <!-- Fleet -->
+    <div>
+      <div class="section-title">أسطول الحافلات</div>
+      <div id="fleetList"></div>
+    </div>
+
+    <!-- Lines -->
+    <div>
+      <div class="section-title">خطوط التشغيل</div>
+      <div class="lines-grid" id="linesMgmt"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast">
+  <div class="t-ico" id="tIco">📍</div>
+  <div><div class="t-txt" id="tTxt">—</div><div class="t-sub" id="tSub">—</div></div>
+</div>
+
+<script>
+// ════════════════════════════════════════════
+//  DATA — LINES & STOPS
+// ════════════════════════════════════════════
+const LINES = [
+  {
+    id:1, name:'الخط 01', route:'المحطة الرئيسية ↔ الجامعة',
+    color:'#f59e0b', bg:'rgba(245,158,11,.15)',
+    stops:[
+      {name:'المحطة الرئيسية', lat:36.7372, lng:3.0869},
+      {name:'السوق المركزي',    lat:36.7395, lng:3.0920},
+      {name:'المستشفى',         lat:36.7418, lng:3.0975},
+      {name:'حي النور',         lat:36.7440, lng:3.1030},
+      {name:'الجامعة',          lat:36.7462, lng:3.1085},
+    ]
+  },
+  {
+    id:2, name:'الخط 02', route:'حي الأمل ↔ المطار',
+    color:'#06b6d4', bg:'rgba(6,182,212,.15)',
+    stops:[
+      {name:'حي الأمل',         lat:36.7310, lng:3.0780},
+      {name:'الملعب البلدي',    lat:36.7335, lng:3.0840},
+      {name:'مركز التسوق',      lat:36.7358, lng:3.0900},
+      {name:'المطار',           lat:36.7280, lng:3.1150},
+    ]
+  },
+  {
+    id:3, name:'الخط 03', route:'الحي الصناعي ↔ البلدية',
+    color:'#10b981', bg:'rgba(16,185,129,.15)',
+    stops:[
+      {name:'الحي الصناعي',     lat:36.7500, lng:3.0750},
+      {name:'منطقة B',          lat:36.7480, lng:3.0810},
+      {name:'الإدارة',          lat:36.7455, lng:3.0870},
+      {name:'البلدية',          lat:36.7430, lng:3.0930},
+    ]
+  },
+  {
+    id:4, name:'الخط 04', route:'الضاحية ↔ المدينة القديمة',
+    color:'#8b5cf6', bg:'rgba(139,92,246,.15)',
+    stops:[
+      {name:'الضاحية الشمالية', lat:36.7550, lng:3.0700},
+      {name:'السكن الجامعي',    lat:36.7520, lng:3.0780},
+      {name:'المدينة القديمة',  lat:36.7490, lng:3.0860},
+    ]
+  }
+];
+
+const FLEET = [
+  {id:'BUS-01', line:1, driver:'محمد أمين', status:'live', speed:32},
+  {id:'BUS-02', line:2, driver:'كريم بلال', status:'live', speed:18},
+  {id:'BUS-03', line:3, driver:'يوسف حاج', status:'off',  speed:0},
+];
+
+// ════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════
+let role = null, selectedLine = null;
+let peer = null, myPeerId = '';
+let connections = [], driverConn = null;
+let map = null, adminMapInst = null;
+let busMarker = null, myMarker = null, routeLine = null, stopMarkers = [];
+let routeCoords = [];
+let tracking = false, watchId = null;
+let totalDist = 0, stopCnt = 0, stationaryT = 0;
+let lastLL = null, myLL = null;
+let nextStopIdx = 0;
+let alerts = {km1:false, m500:false, here:false};
+let passengerCount = 0;
+
+// ════════════════════════════════════════════
+//  SCREENS
+// ════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ════════════════════════════════════════════
+//  LANDING
+// ════════════════════════════════════════════
+function pickRole(r) {
+  role = r;
+  ['rD','rP','rA'].forEach(id=>document.getElementById(id)?.classList.remove('sel','sel'));
+  if(r==='driver')   {document.getElementById('rD').classList.add('sel');}
+  if(r==='passenger'){document.getElementById('rP').classList.add('sel');}
+  if(r==='admin')    {document.getElementById('rA').classList.add('sel');}
+  document.getElementById('landNext').disabled = false;
+}
+
+function goNext() {
+  if(role==='driver')    initDriverPeer();
+  else if(role==='passenger') renderLines();
+  else if(role==='admin')     initAdmin();
+}
+
+// ════════════════════════════════════════════
+//  DRIVER — PEER
+// ════════════════════════════════════════════
+function initDriverPeer() {
+  showScreen('driverShare');
+  document.getElementById('driverCode').textContent = '⏳';
+  peer = new Peer(undefined, {config:{iceServers:[
+    {urls:'stun:stun.l.google.com:19302'},
+    {urls:'stun:stun1.l.google.com:19302'},
+    {urls:'stun:stun2.l.google.com:19302'},
+  ]}});
+  peer.on('open', id => {
+    myPeerId = id;
+    document.getElementById('driverCode').textContent = id.substring(0,8).toUpperCase();
+    toast('✅','جاهز!','شارك الرمز وابدأ الرحلة','green');
+  });
+  peer.on('connection', conn => {
+    connections.push(conn);
+    passengerCount = connections.length;
+    conn.on('open',()=>{
+      document.getElementById('connPill').className='conn-pill connected';
+      document.getElementById('connTxt').textContent=`✅ ${connections.length} زبون متصل`;
+      if(document.getElementById('dPass')) document.getElementById('dPass').textContent=connections.length;
+      toast('👤','زبون اتصل!',`إجمالي: ${connections.length}`,'green');
+    });
+    conn.on('close',()=>{connections=connections.filter(c=>c!==conn);});
+  });
+  peer.on('error', e => toast('❌','خطأ',e.type||e.message,'red'));
+}
+
+// ════════════════════════════════════════════
+//  LINES SELECT (passenger)
+// ════════════════════════════════════════════
+function renderLines() {
+  showScreen('lineSelect');
+  const container = document.getElementById('linesList');
+  container.innerHTML = LINES.map(l=>`
+    <div class="line-card" id="lc${l.id}" onclick="pickLine(${l.id})">
+      <div class="line-num" style="background:${l.bg};color:${l.color};">${l.id}</div>
+      <div>
+        <div class="line-info-name">${l.name}</div>
+        <div class="line-info-sub">${l.route}</div>
+        <div class="line-stops">${l.stops.length} محطات</div>
+      </div>
+    </div>`).join('');
+}
+
+function pickLine(id) {
+  selectedLine = LINES.find(l=>l.id===id);
+  document.querySelectorAll('.line-card').forEach(c=>c.classList.remove('sel'));
+  document.getElementById('lc'+id)?.classList.add('sel');
+  document.getElementById('lineJoinBtn').disabled = false;
+}
+
+// ════════════════════════════════════════════
+//  PASSENGER — PEER (called after line select)
+// ════════════════════════════════════════════
+function goToMap(r) {
+  role = r;
+  showScreen('mainApp');
+  initMap();
+  if(r==='driver') {
+    document.getElementById('dPanel').style.display='block';
+    document.getElementById('hIco').textContent='🚌';
+    document.getElementById('hTitle').textContent='واجهة السائق';
+    document.getElementById('hSub').textContent=`رمز: ${document.getElementById('driverCode').textContent}`;
+    document.getElementById('hBadge').textContent=document.getElementById('driverCode').textContent;
+    document.getElementById('hBadge').className='hdr-badge code';
+    renderDriverStops();
+  } else {
+    document.getElementById('pPanel').style.display='block';
+    document.getElementById('hIco').textContent='👤';
+    document.getElementById('hTitle').textContent='واجهة الزبون';
+    document.getElementById('hSub').textContent=selectedLine ? selectedLine.name : 'تتبع الحافلة';
+    document.getElementById('hBadge').textContent='🟢 مباشر';
+    document.getElementById('hBadge').className='hdr-badge live';
+    renderLineBar();
+    renderPassStops();
+    drawRouteOnMap();
+    getMyLocation();
+    // Now connect to driver
+    showPassengerConnectFlow();
+  }
+}
+
+function showPassengerConnectFlow() {
+  // Show a mini connect UI inside the map screen
+  toast('🔑','أدخل رمز السائق','ابحث عن الرمز في صندوق الشاشة','amber');
+  // We'll open the join screen briefly
+  setTimeout(()=>{
+    const code = prompt('أدخل رمز الحافلة (من السائق):');
+    if(code && code.trim()) {
+      connectToPeer(code.trim());
+    } else {
+      toast('⚠️','بدون رمز','ستعمل بدون تتبع مباشر','amber');
+    }
+  }, 500);
+}
+
+function connectToPeer(code) {
+  peer = new Peer(undefined, {config:{iceServers:[
+    {urls:'stun:stun.l.google.com:19302'},
+    {urls:'stun:stun1.l.google.com:19302'},
+  ]}});
+  peer.on('open', ()=>{
+    driverConn = peer.connect(code.toLowerCase(), {reliable:true});
+    driverConn.on('open',()=>toast('✅','متصل بالحافلة!','GPS مباشر','green'));
+    driverConn.on('data', d=>{ if(d.type==='gps') updateBusGPS(d); });
+    driverConn.on('close',()=>toast('🔴','انقطع الاتصال','','red'));
+    driverConn.on('error',()=>toast('❌','خطأ في الاتصال','تأكد من الرمز','red'));
+  });
+  peer.on('error',e=>toast('❌','خطأ',e.type,'red'));
+}
+
+// ════════════════════════════════════════════
+//  MAP INIT
+// ════════════════════════════════════════════
+function initMap() {
+  const center = [36.7372, 3.0869];
+  map = L.map('map',{zoomControl:false,attributionControl:false}).setView(center,14);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+  L.control.zoom({position:'topleft'}).addTo(map);
+
+  const busIco = L.divIcon({
+    html:`<div style="width:46px;height:46px;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 0 28px rgba(245,158,11,.8),0 0 8px rgba(245,158,11,.4);border:3px solid rgba(255,255,255,.3);">🚌</div>`,
+    iconSize:[46,46],iconAnchor:[23,23],className:''
+  });
+  busMarker = L.marker(center,{icon:busIco}).addTo(map);
+  routeLine = L.polyline([],{color:'#10b981',weight:4,opacity:.85,dashArray:null}).addTo(map);
+}
+
+// ════════════════════════════════════════════
+//  DRAW ROUTE & STOPS ON MAP
+// ════════════════════════════════════════════
+function drawRouteOnMap() {
+  if(!selectedLine||!map) return;
+  const coords = selectedLine.stops.map(s=>[s.lat,s.lng]);
+
+  // Route line
+  L.polyline(coords,{color:selectedLine.color,weight:3,opacity:.5,dashArray:'6,8'}).addTo(map);
+  map.fitBounds(coords, {padding:[30,30]});
+
+  // Stop markers
+  selectedLine.stops.forEach((stop,i)=>{
+    const ico = L.divIcon({
+      html:`<div style="width:26px;height:26px;background:${i===0||i===selectedLine.stops.length-1?selectedLine.color:'var(--card)'};border:2px solid ${selectedLine.color};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:${i===0||i===selectedLine.stops.length-1?'#000':selectedLine.color};box-shadow:0 2px 8px rgba(0,0,0,.4);">${i+1}</div>`,
+      iconSize:[26,26],iconAnchor:[13,13],className:''
+    });
+    const m = L.marker([stop.lat,stop.lng],{icon:ico}).addTo(map);
+    m.bindPopup(`<b style="font-family:Cairo,sans-serif">${stop.name}</b><br><small>محطة ${i+1}</small>`);
+    stopMarkers.push(m);
+  });
+}
+
+// ════════════════════════════════════════════
+//  DRIVER — TRACKING
+// ════════════════════════════════════════════
+function renderDriverStops() {
+  const container = document.getElementById('dStopsList');
+  if(!selectedLine) { document.getElementById('dStopsSection').style.display='none'; return; }
+  document.getElementById('dStopsSection').style.display='block';
+  container.innerHTML = selectedLine.stops.map((s,i)=>`
+    <div class="stop-item" id="ds${i}">
+      <div class="stop-dot blue"></div>
+      <div class="stop-name">${s.name}</div>
+    </div>`).join('');
+  drawRouteOnMap();
+}
+
+function toggleTracking() {
+  tracking = !tracking;
+  const btn = document.getElementById('dBtn');
+  if(tracking) {
+    btn.className='abtn abtn-stop'; btn.textContent='⏹ إيقاف الرحلة';
+    document.getElementById('dPill').className='spill live';
+    document.getElementById('dPillTxt').textContent='يبث GPS الحقيقي';
+    totalDist=0; stopCnt=0; routeCoords=[]; lastLL=null; stationaryT=0; nextStopIdx=0;
+    routeLine.setLatLngs([]);
+    startGPS();
+    toast('🟢','بدأت الرحلة','GPS حقيقي نشط','green');
+  } else {
+    btn.className='abtn abtn-go'; btn.textContent='▶ ابدأ وأرسل موقعك';
+    document.getElementById('dPill').className='spill off';
+    document.getElementById('dPillTxt').textContent='في الانتظار';
+    if(watchId) navigator.geolocation.clearWatch(watchId);
+    broadcast({type:'gps',status:'stopped'});
+    toast('✅','انتهت الرحلة',`${stopCnt} محطات — ${totalDist.toFixed(1)} كم`,'green');
+  }
+}
+
+function startGPS() {
+  if(!navigator.geolocation) { toast('❌','GPS غير متاح','استخدم Chrome','red'); return; }
+  navigator.geolocation.getCurrentPosition(p=>{
+    onGPS(p);
+    watchId = navigator.geolocation.watchPosition(onGPS, gpsErr,
+      {enableHighAccuracy:true,maximumAge:2000,timeout:15000});
+  }, gpsErr, {enableHighAccuracy:true,timeout:15000});
+}
+
+function gpsErr(e) {
+  toast('⚠️','خطأ GPS',e.code===1?'اسمح بالوصول للموقع':e.message,'amber');
+}
+
+function onGPS(pos) {
+  if(!tracking) return;
+  const {latitude:lat,longitude:lng,speed,accuracy} = pos.coords;
+  const kmh = speed!=null ? Math.round(Math.max(speed,speed*3.6>150?speed:speed*3.6)) : 0;
+  const ll=[lat,lng];
+
+  busMarker.setLatLng(ll);
+  map.panTo(ll);
+  routeCoords.push(ll);
+  if(routeCoords.length>800) routeCoords.shift();
+  routeLine.setLatLngs(routeCoords);
+
+  if(lastLL){const d=haversine(lastLL[0],lastLL[1],lat,lng);if(d<0.4)totalDist+=d;}
+  lastLL=ll;
+
+  // Stop detection
+  if(kmh<5){
+    stationaryT+=3;
+    if(stationaryT>=30){
+      stationaryT=0;stopCnt++;
+      document.getElementById('dStp').textContent=stopCnt;
+      toast('📍',`محطة ${stopCnt} مسجلة`,`${lat.toFixed(4)},${lng.toFixed(4)}`,'amber');
+      checkNearestStop(lat,lng);
+    }
+  } else { stationaryT=0; }
+
+  document.getElementById('dSpd').textContent=kmh;
+  document.getElementById('dDst').textContent=totalDist.toFixed(1);
+  document.getElementById('gpsAcc').textContent=`±${Math.round(accuracy||0)}م`;
+
+  broadcast({type:'gps',lat,lng,spd:kmh,dist:totalDist.toFixed(1),stops:stopCnt,acc:Math.round(accuracy||0),ts:Date.now(),status:'live'});
+}
+
+function checkNearestStop(lat,lng) {
+  if(!selectedLine) return;
+  let nearest=null,minD=Infinity;
+  selectedLine.stops.forEach((s,i)=>{
+    const d=haversine(lat,lng,s.lat,s.lng);
+    if(d<minD){minD=d;nearest={s,i};}
+  });
+  if(nearest&&minD<0.3) {
+    document.querySelectorAll('.stop-item').forEach(e=>e.classList.remove('passed'));
+    for(let i=0;i<=nearest.i;i++) document.getElementById('ds'+i)?.classList.add('passed');
+    nextStopIdx=nearest.i+1;
+  }
+}
+
+function broadcast(data) {
+  connections.forEach(c=>{try{if(c.open)c.send(data);}catch(e){}});
+}
+
+// ════════════════════════════════════════════
+//  PASSENGER UI
+// ════════════════════════════════════════════
+function renderLineBar() {
+  if(!selectedLine) return;
+  document.getElementById('lineBar').innerHTML=`
+    <div class="lb-num" style="background:${selectedLine.bg};color:${selectedLine.color};">${selectedLine.id}</div>
+    <div>
+      <div class="lb-name">${selectedLine.name}</div>
+      <div class="lb-stops">${selectedLine.route}</div>
+    </div>`;
+}
+
+function renderPassStops() {
+  if(!selectedLine) return;
+  const list=document.getElementById('pStopsList');
+  list.innerHTML=selectedLine.stops.map((s,i)=>`
+    <div class="stop-item" id="ps${i}">
+      <div class="stop-dot ${i===0?'green':'blue'}"></div>
+      <div class="stop-name">${s.name}</div>
+      <div class="stop-dist" id="psd${i}">—</div>
+    </div>`).join('');
+}
+
+function getMyLocation() {
+  if(!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(pos=>{
+    myLL=[pos.coords.latitude,pos.coords.longitude];
+    const ico=L.divIcon({
+      html:`<div style="width:20px;height:20px;background:#06b6d4;border-radius:50%;border:3px solid #fff;box-shadow:0 0 12px rgba(6,182,212,.8);"></div>`,
+      iconSize:[20,20],iconAnchor:[10,10],className:''
+    });
+    myMarker=L.marker(myLL,{icon:ico}).addTo(map).bindPopup('موقعك');
+  },()=>{},{enableHighAccuracy:true});
+}
+
+function updateBusGPS(d) {
+  if(d.status==='stopped'){
+    document.getElementById('pName').textContent='الرحلة انتهت';
+    document.getElementById('pIco').textContent='⭕';
+    return;
+  }
+  const ll=[d.lat,d.lng];
+  busMarker.setLatLng(ll);
+  routeCoords.push(ll);
+  if(routeCoords.length>400) routeCoords.shift();
+  routeLine.setLatLngs(routeCoords);
+
+  document.getElementById('pIco').textContent='🟢';
+  document.getElementById('pName').textContent=`الحافلة تسير`;
+  document.getElementById('pSpd').textContent=`⚡ ${d.spd} كم/س`;
+  document.getElementById('pSub').textContent=`مسافة مقطوعة: ${d.dist} كم | دقة: ±${d.acc}م`;
+
+  // Update stops distances
+  if(selectedLine) {
+    selectedLine.stops.forEach((s,i)=>{
+      const km=haversine(d.lat,d.lng,s.lat,s.lng);
+      const el=document.getElementById('psd'+i);
+      if(el) el.textContent=km<1?`${(km*1000).toFixed(0)}م`:`${km.toFixed(1)}كم`;
+      // Mark passed stops
+      const item=document.getElementById('ps'+i);
+      if(item){
+        item.classList.remove('passed','next');
+        if(km<0.15){ item.classList.add('passed'); item.querySelector('.stop-dot').className='stop-dot green'; }
+      }
+    });
+    // Next stop
+    let nextI=-1,minD=Infinity;
+    selectedLine.stops.forEach((s,i)=>{
+      const el=document.getElementById('ps'+i);
+      if(el&&!el.classList.contains('passed')){
+        const km=haversine(d.lat,d.lng,s.lat,s.lng);
+        if(km<minD){minD=km;nextI=i;}
+      }
+    });
+    if(nextI>=0){
+      const el=document.getElementById('ps'+nextI);
+      el?.classList.add('next');
+      el?.querySelector('.stop-dot')?.setAttribute('class','stop-dot amber');
+      const eta=d.spd>0?Math.max(1,Math.round(minD/(d.spd/60))):'—';
+      document.getElementById('pEta').textContent=`⏱ ${eta} د`;
+    }
+  }
+
+  // Distance to me
+  if(myLL){
+    const km=haversine(myLL[0],myLL[1],d.lat,d.lng);
+    document.getElementById('pDist').textContent=`📍 ${km<1?(km*1000).toFixed(0)+'م':km.toFixed(1)+'كم'}`;
+    triggerAlerts(km,d.spd);
+  }
+}
+
+function triggerAlerts(km,spd) {
+  if(km<1.0&&!alerts.km1){
+    alerts.km1=true;
+    toast('⚠️','الحافلة على بُعد كيلومتر!','استعد للتوجه للمحطة','amber');
+    speak('تنبيه! الحافلة اقتربت، ستصل خلال دقائق');
+    document.getElementById('pCard').classList.add('alert');
+  }
+  if(km<0.5&&!alerts.m500){
+    alerts.m500=true;
+    toast('🔔','500 متر فقط!','توجه للمحطة الآن','amber');
+    speak('الحافلة على بُعد خمسمائة متر، يُرجى التوجه للمحطة');
+  }
+  if(km<0.08&&!alerts.here){
+    alerts.here=true;
+    toast('✅','الحافلة وصلت! 🚌','ارتقِ الآن','green');
+    speak('الحافلة وصلت، يمكنك الركوب الآن');
+    setTimeout(()=>{Object.keys(alerts).forEach(k=>alerts[k]=false);document.getElementById('pCard').classList.remove('alert');},90000);
+  }
+}
+
+// ════════════════════════════════════════════
+//  ADMIN DASHBOARD
+// ════════════════════════════════════════════
+function initAdmin() {
+  showScreen('adminDash');
+  renderFleet();
+  renderLinesAdmin();
+  setTimeout(initAdminMap, 200);
+  // Simulate live updates
+  setInterval(()=>{
+    document.getElementById('adPassengers').textContent=Math.floor(8+Math.random()*10);
+    FLEET.filter(f=>f.status==='live').forEach(f=>{f.speed=Math.round(15+Math.random()*40);});
+    renderFleet();
+  },5000);
+}
+
+function renderFleet() {
+  const html=FLEET.map(f=>{
+    const line=LINES.find(l=>l.id===f.line);
+    return `<div class="fleet-item">
+      <div class="fi-icon ${f.status}">🚌</div>
+      <div style="flex:1;">
+        <div class="fi-name">${f.id}</div>
+        <div class="fi-line">${line?.name||'—'} · ${f.driver}</div>
+      </div>
+      <div style="text-align:left;">
+        <div class="fi-status ${f.status}">${f.status==='live'?'🟢 نشطة':'⚫ متوقفة'}</div>
+        ${f.status==='live'?`<div class="fi-speed" style="margin-top:4px;">${f.speed} كم/س</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('fleetList').innerHTML=html;
+  const active=FLEET.filter(f=>f.status==='live').length;
+  document.getElementById('adActiveBus').textContent=active;
+}
+
+function renderLinesAdmin() {
+  const html=LINES.map(l=>`
+    <div class="line-mgmt">
+      <div class="lm-num" style="background:${l.bg};color:${l.color};">${l.id}</div>
+      <div style="flex:1;">
+        <div class="lm-name">${l.name}</div>
+        <div class="lm-info">${l.route} · ${l.stops.length} محطات</div>
+      </div>
+      <div class="lm-active on"></div>
+    </div>`).join('');
+  document.getElementById('linesMgmt').innerHTML=html;
+}
+
+function initAdminMap() {
+  const center=[36.7400, 3.0900];
+  adminMapInst=L.map('adminMap',{zoomControl:false,attributionControl:false}).setView(center,13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(adminMapInst);
+  // Draw all lines
+  LINES.forEach(l=>{
+    const coords=l.stops.map(s=>[s.lat,s.lng]);
+    L.polyline(coords,{color:l.color,weight:3,opacity:.7}).addTo(adminMapInst);
+    l.stops.forEach(s=>{
+      const ico=L.divIcon({html:`<div style="width:10px;height:10px;background:${l.color};border-radius:50%;border:2px solid #fff;"></div>`,iconSize:[10,10],iconAnchor:[5,5],className:''});
+      L.marker([s.lat,s.lng],{icon:ico}).addTo(adminMapInst).bindPopup(s.name);
+    });
+  });
+  // Fake bus positions
+  FLEET.filter(f=>f.status==='live').forEach(f=>{
+    const line=LINES.find(l=>l.id===f.line);
+    if(!line) return;
+    const mid=line.stops[1];
+    const ico=L.divIcon({html:`<div style="font-size:18px;">🚌</div>`,iconSize:[24,24],iconAnchor:[12,12],className:''});
+    L.marker([mid.lat,mid.lng],{icon:ico}).addTo(adminMapInst).bindPopup(`${f.id} · ${f.driver}`);
+  });
+}
+
+// ════════════════════════════════════════════
+//  UTILS
+// ════════════════════════════════════════════
+function centerBus(){if(busMarker&&map)map.panTo(busMarker.getLatLng());}
+
+function speak(txt){
+  if(!window.speechSynthesis)return;
+  window.speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(txt);
+  u.lang='ar-SA';u.rate=0.88;u.pitch=1;u.volume=1;
+  const vs=window.speechSynthesis.getVoices();
+  const av=vs.find(v=>v.lang.startsWith('ar'));
+  if(av)u.voice=av;
+  window.speechSynthesis.speak(u);
+}
+
+function testVoice(){
+  speak('مرحباً، الحافلة في طريقها إليك. يُرجى الاستعداد للركوب.');
+  toast('🔊','يتم تشغيل الصوت','تنبيه صوتي','green');
+}
+
+function shareCode(){
+  const code=document.getElementById('driverCode')?.textContent||myPeerId;
+  if(navigator.share){
+    navigator.share({title:'نقـلي 🚌',text:`رمز رحلتي: ${code}\nافتح تطبيق نقـلي وأدخل هذا الرمز لتتابع الحافلة مباشرة!`});
+  } else {
+    navigator.clipboard?.writeText(code);
+    toast('📋','تم نسخ الرمز',code,'green');
+  }
+}
+
+function connectToDriver(){
+  const code=document.getElementById('codeInput').value.trim();
+  if(!code)return;
+  document.getElementById('connLog').textContent='جارٍ الاتصال...';
+  connectToPeer(code);
+}
+
+function onCodeIn(){
+  const v=document.getElementById('codeInput').value.trim();
+  document.getElementById('connectBtn').disabled=v.length<4;
+}
+
+function haversine(la1,lo1,la2,lo2){
+  const R=6371,r=Math.PI/180;
+  const dlat=(la2-la1)*r,dlon=(lo2-lo1)*r;
+  const a=Math.sin(dlat/2)**2+Math.cos(la1*r)*Math.cos(la2*r)*Math.sin(dlon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function toast(ico,txt,sub,type=''){
+  ['tIco','tTxt','tSub'].forEach((id,i)=>document.getElementById(id).textContent=[ico,txt,sub][i]);
+  const t=document.getElementById('toast');
+  t.className=type?`show ${type}`:'show';
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>t.className='',3500);
+}
+
+window.speechSynthesis?.getVoices();
+window.speechSynthesis?.addEventListener?.('voiceschanged',()=>window.speechSynthesis.getVoices());
+</script>
+</body>
+</html>
