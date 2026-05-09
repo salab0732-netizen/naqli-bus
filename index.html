@@ -42,15 +42,15 @@ body{background:var(--bg);color:var(--text);font-family:'Cairo',sans-serif;displ
 
 /* ── LANDING ── */
 #land{
-  align-items:center;justify-content:center;padding:32px 22px;gap:18px;
+  align-items:center;justify-content:flex-start;padding:20px 22px 30px;gap:12px;
   background:
     radial-gradient(ellipse 90% 60% at 15% 0%,rgba(245,158,11,.1) 0%,transparent 55%),
     radial-gradient(ellipse 70% 50% at 90% 95%,rgba(6,182,212,.08) 0%,transparent 55%),
     var(--bg);
-  position:relative;overflow:hidden;
+  position:relative;overflow-y:auto;
 }
 .grid-bg{position:absolute;inset:0;background-image:linear-gradient(rgba(6,182,212,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(6,182,212,.04) 1px,transparent 1px);background-size:36px 36px;mask-image:radial-gradient(ellipse 90% 90% at 50% 50%,black,transparent);}
-.land-logo{width:88px;height:88px;background:linear-gradient(135deg,var(--gold),#c47f0a);border-radius:26px;display:flex;align-items:center;justify-content:center;font-size:40px;box-shadow:0 0 60px rgba(245,158,11,.45),0 8px 24px rgba(245,158,11,.3);animation:logoFloat 4s ease infinite;position:relative;z-index:1;}
+.land-logo{width:64px;height:64px;background:linear-gradient(135deg,var(--gold),#c47f0a);border-radius:26px;display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 0 60px rgba(245,158,11,.45),0 8px 24px rgba(245,158,11,.3);animation:logoFloat 4s ease infinite;position:relative;z-index:1;}
 @keyframes logoFloat{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-10px) rotate(1deg)}}
 .land-title{font-size:36px;font-weight:900;letter-spacing:-2px;position:relative;z-index:1;font-family:'Tajawal',sans-serif;}
 .land-title span{color:var(--gold);}
@@ -62,14 +62,14 @@ body{background:var(--bg);color:var(--text);font-family:'Cairo',sans-serif;displ
 .ba{background:rgba(245,158,11,.08);color:var(--gold);border-color:rgba(245,158,11,.25);}
 
 .role-wrap{width:100%;max-width:360px;display:flex;flex-direction:column;gap:10px;position:relative;z-index:1;}
-.role-card{padding:18px 16px;border-radius:18px;border:2px solid var(--border);background:var(--card);cursor:pointer;transition:all .3s;display:flex;align-items:center;gap:14px;}
+.role-card{padding:12px 14px;border-radius:14px;border:2px solid var(--border);background:var(--card);cursor:pointer;transition:all .3s;display:flex;align-items:center;gap:14px;}
 .role-card:active,.role-card.sel{border-color:var(--gold);background:rgba(245,158,11,.06);}
 .rc-ico{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
 .rc-name{font-size:15px;font-weight:800;}
 .rc-desc{font-size:11px;color:var(--dim);margin-top:2px;}
 .rc-arr{font-size:18px;color:var(--dim);margin-right:auto;}
 
-.main-btn{width:100%;max-width:360px;padding:16px;border-radius:16px;border:none;font-family:'Cairo',sans-serif;font-size:16px;font-weight:900;cursor:pointer;transition:all .3s;position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:8px;}
+.main-btn{width:100%;max-width:360px;padding:13px;border-radius:14px;border:none;font-family:'Cairo',sans-serif;font-size:16px;font-weight:900;cursor:pointer;transition:all .3s;position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:8px;}
 .btn-gold{background:linear-gradient(135deg,var(--gold),#c47f0a);color:#000;box-shadow:0 4px 24px rgba(245,158,11,.4);}
 .btn-gold:not(:disabled):hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(245,158,11,.55);}
 .btn-gold:disabled{opacity:.3;cursor:not-allowed;box-shadow:none;}
