@@ -3,350 +3,521 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>نقـلي — لوحة التطوير</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<title>نقـلي — نظام تتبع الحافلات</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <style>
+/* ════════════════════════════════════════
+   DESIGN SYSTEM — نقـلي
+════════════════════════════════════════ */
 :root {
-  --bg:#060b14; --s1:#080e1a; --s2:#0c1422; --card:#101828;
-  --card2:#141e2e; --border:#1a2a3e; --border2:#1e3248;
-  --gold:#f59e0b; --cyan:#06b6d4; --green:#10b981;
-  --red:#ef4444; --purple:#8b5cf6; --pink:#ec4899; --blue:#3b82f6;
-  --text:#e2eaf4; --text2:#8ba4be; --dim:#3d5470;
-  --code-bg:#020408; --code-text:#e2eaf4;
+  --bg:      #05080f;
+  --s1:      #080d18;
+  --s2:      #0c1220;
+  --card:    #101828;
+  --card2:   #141e2e;
+  --border:  #1a2a3e;
+  --border2: #203448;
+  --gold:    #f59e0b;
+  --gold2:   #fbbf24;
+  --cyan:    #06b6d4;
+  --green:   #10b981;
+  --red:     #ef4444;
+  --purple:  #8b5cf6;
+  --pink:    #ec4899;
+  --text:    #e2eaf4;
+  --text2:   #8ba4be;
+  --dim:     #3d5470;
+  --r:       14px;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;overflow:hidden;}
 body{background:var(--bg);color:var(--text);font-family:'Cairo',sans-serif;display:flex;flex-direction:column;height:100dvh;}
 
-/* ── HEADER ── */
-.hdr{background:var(--s1);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
-.hdr-logo{display:flex;align-items:center;gap:8px;}
-.hdr-ico{width:34px;height:34px;background:linear-gradient(135deg,var(--gold),#c47f0a);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;}
-.hdr-title{font-size:15px;font-weight:900;}
-.hdr-sub{font-size:10px;color:var(--dim);}
-.save-btn{padding:7px 16px;border-radius:9px;border:none;background:linear-gradient(135deg,var(--green),#059669);color:#fff;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;}
-.save-btn:active{transform:scale(.97);}
+/* ── SCREENS ── */
+.scr{display:none;flex-direction:column;height:100dvh;overflow:hidden;}
+.scr.on{display:flex;}
 
-/* ── TABS ── */
-.tabs{display:flex;background:var(--s2);border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0;}
-.tabs::-webkit-scrollbar{display:none;}
-.tab{flex-shrink:0;padding:10px 14px;border:none;background:transparent;color:var(--dim);font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;}
-.tab.on{color:var(--gold);border-bottom-color:var(--gold);}
+/* ── LANDING ── */
+#land{
+  align-items:center;justify-content:center;padding:32px 22px;gap:18px;
+  background:
+    radial-gradient(ellipse 90% 60% at 15% 0%,rgba(245,158,11,.1) 0%,transparent 55%),
+    radial-gradient(ellipse 70% 50% at 90% 95%,rgba(6,182,212,.08) 0%,transparent 55%),
+    var(--bg);
+  position:relative;overflow:hidden;
+}
+.grid-bg{position:absolute;inset:0;background-image:linear-gradient(rgba(6,182,212,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(6,182,212,.04) 1px,transparent 1px);background-size:36px 36px;mask-image:radial-gradient(ellipse 90% 90% at 50% 50%,black,transparent);}
+.land-logo{width:88px;height:88px;background:linear-gradient(135deg,var(--gold),#c47f0a);border-radius:26px;display:flex;align-items:center;justify-content:center;font-size:40px;box-shadow:0 0 60px rgba(245,158,11,.45),0 8px 24px rgba(245,158,11,.3);animation:logoFloat 4s ease infinite;position:relative;z-index:1;}
+@keyframes logoFloat{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-10px) rotate(1deg)}}
+.land-title{font-size:36px;font-weight:900;letter-spacing:-2px;position:relative;z-index:1;font-family:'Tajawal',sans-serif;}
+.land-title span{color:var(--gold);}
+.land-sub{font-size:13px;color:var(--text2);text-align:center;line-height:1.8;position:relative;z-index:1;}
+.badges{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;position:relative;z-index:1;}
+.badge{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;border:1px solid;}
+.bg{background:rgba(16,185,129,.08);color:var(--green);border-color:rgba(16,185,129,.25);}
+.bb{background:rgba(6,182,212,.08);color:var(--cyan);border-color:rgba(6,182,212,.25);}
+.ba{background:rgba(245,158,11,.08);color:var(--gold);border-color:rgba(245,158,11,.25);}
 
-/* ── CONTENT ── */
-.content{flex:1;overflow-y:auto;padding:14px;}
-.content::-webkit-scrollbar{width:3px;}
-.content::-webkit-scrollbar-thumb{background:var(--border2);}
+.role-wrap{width:100%;max-width:360px;display:flex;flex-direction:column;gap:10px;position:relative;z-index:1;}
+.role-card{padding:18px 16px;border-radius:18px;border:2px solid var(--border);background:var(--card);cursor:pointer;transition:all .3s;display:flex;align-items:center;gap:14px;}
+.role-card:active,.role-card.sel{border-color:var(--gold);background:rgba(245,158,11,.06);}
+.rc-ico{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
+.rc-name{font-size:15px;font-weight:800;}
+.rc-desc{font-size:11px;color:var(--dim);margin-top:2px;}
+.rc-arr{font-size:18px;color:var(--dim);margin-right:auto;}
 
-/* ── CARDS ── */
-.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;}
-.card-title{font-size:13px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px;color:var(--text);}
-.card-title span{font-size:16px;}
+.main-btn{width:100%;max-width:360px;padding:16px;border-radius:16px;border:none;font-family:'Cairo',sans-serif;font-size:16px;font-weight:900;cursor:pointer;transition:all .3s;position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn-gold{background:linear-gradient(135deg,var(--gold),#c47f0a);color:#000;box-shadow:0 4px 24px rgba(245,158,11,.4);}
+.btn-gold:not(:disabled):hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(245,158,11,.55);}
+.btn-gold:disabled{opacity:.3;cursor:not-allowed;box-shadow:none;}
+.btn-dim{background:var(--card);border:1px solid var(--border);color:var(--text2);font-size:14px;}
 
-/* ── FORM ELEMENTS ── */
-.field{margin-bottom:12px;}
-.field-lbl{font-size:11px;color:var(--dim);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
-.field-inp{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text);font-family:'Cairo',sans-serif;font-size:14px;outline:none;transition:border-color .2s;direction:rtl;}
-.field-inp:focus{border-color:var(--gold);}
-.field-inp::placeholder{color:var(--dim);}
-select.field-inp{cursor:pointer;}
+/* ── DRIVER SHARE ── */
+#dShare{align-items:center;justify-content:center;padding:28px 22px;gap:16px;
+  background:radial-gradient(ellipse 80% 60% at 50% 10%,rgba(245,158,11,.07) 0%,transparent 60%),var(--bg);}
+.code-box{width:100%;max-width:360px;background:var(--card);border:2px solid rgba(245,158,11,.35);border-radius:22px;padding:26px 20px;text-align:center;box-shadow:0 0 40px rgba(245,158,11,.08);}
+.code-lbl{font-size:11px;color:var(--dim);font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;}
+.code-val{font-size:36px;font-weight:900;color:var(--gold);letter-spacing:5px;font-family:'Tajawal',monospace;margin-bottom:10px;}
+.code-hint{font-size:12px;color:var(--text2);line-height:1.7;}
+.share-btn{width:100%;margin-top:14px;padding:12px;border-radius:12px;border:1px solid rgba(245,158,11,.3);background:rgba(245,158,11,.08);color:var(--gold);font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;}
+.conn-pill{display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:12px;font-size:13px;font-weight:700;}
+.cp-wait{background:rgba(61,84,112,.15);color:var(--dim);border:1px solid rgba(61,84,112,.2);}
+.cp-conn{background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.25);}
 
-/* ── BUTTONS ── */
-.btn{padding:10px 16px;border-radius:10px;border:none;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px;}
-.btn-gold{background:linear-gradient(135deg,var(--gold),#c47f0a);color:#000;}
-.btn-green{background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3);}
-.btn-red{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.25);}
-.btn-blue{background:rgba(59,130,246,.12);color:var(--blue);border:1px solid rgba(59,130,246,.25);}
-.btn-dim{background:var(--card2);color:var(--text2);border:1px solid var(--border);}
-.btn:active{transform:scale(.96);}
-.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+/* ── PASS JOIN ── */
+#pJoin{align-items:center;justify-content:center;padding:28px 22px;gap:16px;
+  background:radial-gradient(ellipse 80% 60% at 50% 10%,rgba(6,182,212,.07) 0%,transparent 60%),var(--bg);}
+.inp-lbl{font-size:11px;color:var(--dim);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;align-self:flex-start;width:100%;max-width:360px;}
+.code-inp{width:100%;max-width:360px;background:var(--card);border:2px solid var(--border);border-radius:16px;padding:18px;color:var(--text);font-family:'Tajawal',monospace;font-size:28px;font-weight:800;outline:none;text-align:center;letter-spacing:5px;text-transform:uppercase;transition:border-color .3s;}
+.code-inp:focus{border-color:var(--gold);}
+.code-inp::placeholder{color:var(--dim);font-size:14px;letter-spacing:2px;}
+.conn-log{width:100%;max-width:360px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:13px;color:var(--text2);text-align:center;min-height:50px;}
 
-/* ── COLOR PICKER ── */
-.color-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:8px;}
-.color-dot{width:36px;height:36px;border-radius:10px;cursor:pointer;transition:all .2s;border:2px solid transparent;}
-.color-dot.sel{border-color:#fff;transform:scale(1.1);}
-.color-dot:active{transform:scale(.9);}
+/* ── LINE SELECT ── */
+#lineSelect{overflow-y:auto;padding:16px;}
+.ls-head{padding:0 0 14px;flex-shrink:0;}
+.line-item{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px;margin-bottom:10px;cursor:pointer;display:flex;align-items:center;gap:14px;transition:all .3s;}
+.line-item:active,.line-item.sel{border-color:var(--cyan);}
+.li-num{width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;flex-shrink:0;font-family:'Tajawal',sans-serif;}
+.li-name{font-size:15px;font-weight:800;}
+.li-route{font-size:11px;color:var(--dim);margin-top:2px;}
+.li-tags{display:flex;gap:6px;margin-top:6px;}
+.li-tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;}
 
-/* ── LINE EDITOR ── */
-.line-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;transition:border-color .3s;}
-.line-card.editing{border-color:var(--gold);}
-.line-header{display:flex;align-items:center;gap:10px;margin-bottom:0;}
-.line-num{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:900;flex-shrink:0;font-family:'Fira Code',monospace;}
-.line-name{font-size:14px;font-weight:800;flex:1;}
-.line-route{font-size:11px;color:var(--dim);}
-.edit-toggle{padding:5px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text2);font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;cursor:pointer;}
-.edit-toggle.on{border-color:var(--gold);color:var(--gold);background:rgba(245,158,11,.08);}
-.line-body{margin-top:12px;display:none;}
-.line-body.on{display:block;}
+/* ── MAIN APP ── */
+#mainApp{flex-direction:column;}
+.hdr{background:var(--s1);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:200;}
+.hdr-l{display:flex;align-items:center;gap:10px;}
+.hdr-ico{font-size:22px;}
+.hdr-t{font-size:15px;font-weight:900;}
+.hdr-s{font-size:11px;color:var(--dim);}
+.hdr-badge{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:800;letter-spacing:1px;cursor:pointer;font-family:'Tajawal',monospace;}
+.hb-live{color:var(--green);border-color:rgba(16,185,129,.3);}
+.hb-code{color:var(--gold);}
 
-/* ── STOP ITEMS ── */
-.stop-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--card2);border-radius:9px;margin-bottom:6px;}
-.stop-num{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;flex-shrink:0;}
-.stop-inp{flex:1;background:transparent;border:none;color:var(--text);font-family:'Cairo',sans-serif;font-size:13px;outline:none;direction:rtl;}
-.stop-del{width:24px;height:24px;border-radius:6px;border:none;background:rgba(239,68,68,.12);color:var(--red);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.add-stop-row{display:flex;gap:8px;margin-top:8px;}
-.add-stop-inp{flex:1;background:var(--s2);border:1px solid var(--border);border-radius:9px;padding:9px 12px;color:var(--text);font-family:'Cairo',sans-serif;font-size:13px;outline:none;direction:rtl;}
-.add-stop-inp:focus{border-color:var(--green);}
-.add-stop-btn{padding:9px 14px;border-radius:9px;border:none;background:var(--green);color:#000;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
+#map{flex:1;z-index:1;min-height:0;}
+.leaflet-container{background:#060c14!important;}
+.leaflet-tile{filter:brightness(.75) saturate(.6) hue-rotate(190deg)!important;}
 
-/* ── SCHEDULE ── */
-.sched-wrap{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
-.sched-tag{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;font-family:'Fira Code',monospace;display:flex;align-items:center;gap:6px;color:var(--cyan);}
-.sched-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;}
+/* ── BOTTOM PANEL ── */
+.btm{background:var(--s1);border-top:1px solid var(--border);padding:14px 16px 22px;flex-shrink:0;z-index:200;overflow-y:auto;max-height:52vh;}
 
-/* ── CODE EDITOR ── */
-.code-toolbar{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
-.code-area{width:100%;background:var(--code-bg);border:1px solid var(--border2);border-radius:10px;padding:14px;color:var(--code-text);font-family:'Fira Code',monospace;font-size:12px;line-height:1.7;outline:none;resize:vertical;min-height:320px;direction:ltr;text-align:left;white-space:pre;}
-.search-row{display:flex;gap:8px;margin-bottom:10px;}
-.search-inp{flex:1;background:var(--s2);border:1px solid var(--border);border-radius:9px;padding:9px 12px;color:var(--text);font-family:'Fira Code',monospace;font-size:12px;outline:none;direction:ltr;}
-.search-inp:focus{border-color:var(--cyan);}
+/* pills */
+.pill{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;}
+.p-live{background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.22);}
+.p-off{background:rgba(61,84,112,.1);color:var(--dim);border:1px solid rgba(61,84,112,.18);}
+.p-warn{background:rgba(245,158,11,.1);color:var(--gold);border:1px solid rgba(245,158,11,.22);}
+.p-cyan{background:rgba(6,182,212,.1);color:var(--cyan);border:1px solid rgba(6,182,212,.22);}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor;animation:pdot 1.4s ease infinite;}
+@keyframes pdot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.6)}}
 
-/* ── DESIGN EDITOR ── */
-.color-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
-.color-row:last-child{border-bottom:none;}
-.color-lbl{font-size:13px;font-weight:600;}
-.color-preview{width:32px;height:32px;border-radius:8px;border:2px solid rgba(255,255,255,.1);cursor:pointer;flex-shrink:0;}
-.color-inp-native{width:0;height:0;opacity:0;position:absolute;}
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px;}
+.sbox{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:9px 5px;text-align:center;}
+.sv{font-size:18px;font-weight:900;color:var(--gold);line-height:1;font-family:'Tajawal',sans-serif;}
+.sl{font-size:9px;color:var(--dim);margin-top:2px;}
 
-/* ── PREVIEW ── */
-.preview-frame{width:100%;height:400px;border:none;border-radius:12px;border:1px solid var(--border);}
+/* buttons */
+.abtn{width:100%;padding:14px;border-radius:13px;border:none;font-family:'Cairo',sans-serif;font-size:15px;font-weight:800;cursor:pointer;transition:all .3s;display:flex;align-items:center;justify-content:center;gap:7px;}
+.abtn-go{background:linear-gradient(135deg,var(--green),#059669);color:#fff;box-shadow:0 4px 16px rgba(16,185,129,.3);}
+.abtn-stop{background:linear-gradient(135deg,var(--red),#dc2626);color:#fff;}
+.abtn-sec{flex:1;padding:11px;border-radius:11px;border:1px solid var(--border);background:var(--card);color:var(--text);font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
+.brow{display:flex;gap:8px;margin-top:8px;}
 
-/* ── EXPORT ── */
-.export-card{background:linear-gradient(135deg,rgba(245,158,11,.08),rgba(6,182,212,.05));border:1px solid rgba(245,158,11,.2);border-radius:14px;padding:16px;margin-bottom:12px;}
-.export-title{font-size:14px;font-weight:900;margin-bottom:4px;color:var(--gold);}
-.export-sub{font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6;}
+/* stop items */
+.stop-item{display:flex;align-items:center;gap:11px;padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:11px;margin-bottom:6px;}
+.stop-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;}
 
-/* ── TOAST ── */
-#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--card);border:1px solid var(--gold);border-radius:14px;padding:11px 16px;display:flex;align-items:center;gap:10px;z-index:9999;max-width:320px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.8);transition:all .35s cubic-bezier(.175,.885,.32,1.275);opacity:0;}
+/* passenger card */
+.pcard{background:var(--card2);border:1px solid var(--border);border-radius:15px;padding:14px;margin-bottom:10px;transition:all .3s;}
+.pcard.alert{border-color:var(--gold);background:rgba(245,158,11,.05);}
+
+/* tabs */
+.tab-bar{display:flex;background:var(--s1);border-top:1px solid var(--border);flex-shrink:0;z-index:300;}
+.tab{flex:1;padding:10px 4px 14px;border:none;background:transparent;color:var(--dim);font-family:'Cairo',sans-serif;font-size:11px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;border-top:2px solid transparent;transition:all .2s;}
+.tab.on{color:var(--gold);border-top-color:var(--gold);}
+
+/* ── ADMIN ── */
+.admin-tabs{display:flex;background:var(--s2);border-bottom:1px solid var(--border);flex-shrink:0;}
+.atab{flex:1;padding:10px 4px;border:none;background:transparent;color:var(--dim);font-size:18px;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;}
+.atab.on{color:var(--gold);border-bottom-color:var(--gold);}
+
+/* chart */
+.chart-wrap{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;}
+.chart-title{font-size:12px;color:var(--dim);font-weight:700;margin-bottom:12px;}
+.bars{display:flex;align-items:flex-end;gap:4px;height:64px;}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.bar-inner{width:100%;border-radius:4px 4px 0 0;position:relative;overflow:hidden;min-height:4px;}
+.bar-fill{position:absolute;bottom:0;left:0;right:0;border-radius:4px 4px 0 0;}
+.bar-lbl{font-size:8px;color:var(--dim);white-space:nowrap;}
+
+/* stars */
+.stars{display:flex;gap:2px;}
+.star{font-size:14px;cursor:pointer;transition:color .15s;}
+
+/* rating form */
+.rate-category{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);}
+
+/* schedule */
+.trip-item{display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;}
+.trip-time{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;font-family:'Tajawal',sans-serif;flex-shrink:0;}
+
+/* fleet item */
+.fleet-item{background:var(--card);border:1px solid var(--border);border-radius:15px;padding:14px;margin-bottom:10px;}
+
+/* line editor */
+.stop-edit{display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--card2);border-radius:9px;margin-bottom:6px;}
+
+/* toast */
+#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px 18px;display:flex;align-items:center;gap:12px;z-index:9999;transition:all .4s cubic-bezier(.175,.885,.32,1.275);max-width:350px;width:92%;box-shadow:0 8px 40px rgba(0,0,0,.8);opacity:0;}
 #toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
 
-/* ── CONFIRM DIALOG ── */
-#confirm{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9998;align-items:center;justify-content:center;padding:20px;}
-.confirm-box{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px;max-width:320px;width:100%;}
-.confirm-title{font-size:16px;font-weight:900;margin-bottom:8px;}
-.confirm-msg{font-size:13px;color:var(--text2);margin-bottom:18px;line-height:1.6;}
-.confirm-btns{display:flex;gap:10px;}
+/* ── GUIDE SCREEN ── */
+#guide{overflow-y:auto;padding:20px;}
+.guide-section{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:14px;}
+.guide-title{font-size:16px;font-weight:900;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.guide-step{display:flex;gap:12px;margin-bottom:14px;align-items:flex-start;}
+.step-num{width:28px;height:28px;border-radius:8px;background:var(--gold);color:#000;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0;font-family:'Tajawal',sans-serif;}
+.step-txt{font-size:13px;color:var(--text2);line-height:1.7;flex:1;}
+.step-txt b{color:var(--text);font-weight:700;}
+.tip-box{background:rgba(6,182,212,.07);border:1px solid rgba(6,182,212,.2);border-radius:10px;padding:12px;font-size:12px;color:var(--cyan);line-height:1.7;margin-top:8px;}
+.warn-box{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:12px;font-size:12px;color:var(--gold);line-height:1.7;margin-top:8px;}
 
-/* ── BADGES ── */
-.badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:4px;}
-.badge-g{background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.25);}
-.badge-a{background:rgba(245,158,11,.12);color:var(--gold);border:1px solid rgba(245,158,11,.25);}
-.badge-b{background:rgba(59,130,246,.12);color:var(--blue);border:1px solid rgba(59,130,246,.25);}
+/* section label */
+.sec-lbl{font-size:10px;color:var(--dim);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;}
+
+/* scroll */
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
-<div class="hdr">
-  <div class="hdr-logo">
-    <div class="hdr-ico">⚙️</div>
-    <div>
-      <div class="hdr-title">نقـلي Dev</div>
-      <div class="hdr-sub">لوحة التطوير المحمولة</div>
+<!-- ══════════════════ LANDING ══════════════════ -->
+<div id="land" class="scr on">
+  <div class="grid-bg"></div>
+  <div class="land-logo">🚌</div>
+  <div style="text-align:center;position:relative;z-index:1;">
+    <div class="land-title">نقـ<span>لي</span></div>
+    <div class="land-sub">نظام تتبع الحافلات الاحترافي<br>GPS حقيقي · مسارات · محطات · لوحة تحكم</div>
+  </div>
+  <div class="badges">
+    <div class="badge bg">✓ GPS حقيقي</div>
+    <div class="badge bb">✓ بين هاتفين</div>
+    <div class="badge ba">✓ مجاني 100%</div>
+  </div>
+  <div class="role-wrap">
+    <div class="role-card" id="rD" onclick="pickRole('driver')">
+      <div class="rc-ico" style="background:rgba(245,158,11,.12);">🚌</div>
+      <div><div class="rc-name">السائق</div><div class="rc-desc">أرسل موقعك الحقيقي للزبائن</div></div>
+      <div class="rc-arr">←</div>
+    </div>
+    <div class="role-card" id="rP" onclick="pickRole('passenger')">
+      <div class="rc-ico" style="background:rgba(6,182,212,.12);">👤</div>
+      <div><div class="rc-name">الزبون</div><div class="rc-desc">تابع الحافلة مع تنبيهات صوتية</div></div>
+      <div class="rc-arr">←</div>
+    </div>
+    <div class="role-card" id="rA" onclick="pickRole('admin')">
+      <div class="rc-ico" style="background:rgba(139,92,246,.12);">🖥️</div>
+      <div><div class="rc-name">المشرف</div><div class="rc-desc">لوحة تحكم — أسطول وخطوط</div></div>
+      <div class="rc-arr">←</div>
+    </div>
+    <div class="role-card" id="rG" onclick="pickRole('guide')">
+      <div class="rc-ico" style="background:rgba(16,185,129,.12);">📖</div>
+      <div><div class="rc-name">دليل الاستخدام</div><div class="rc-desc">شرح كامل للتطبيق خطوة بخطوة</div></div>
+      <div class="rc-arr">←</div>
     </div>
   </div>
-  <button class="save-btn" onclick="exportApp()">💾 تصدير</button>
+  <button class="main-btn btn-gold" id="landBtn" disabled onclick="goNext()">ابدأ ←</button>
 </div>
 
-<!-- TABS -->
-<div class="tabs">
-  <button class="tab on" onclick="switchTab(this,'tLines')">🗺️ الخطوط</button>
-  <button class="tab" onclick="switchTab(this,'tDesign')">🎨 التصميم</button>
-  <button class="tab" onclick="switchTab(this,'tCode')">💻 الكود</button>
-  <button class="tab" onclick="switchTab(this,'tExport')">📦 تصدير</button>
+<!-- ══════════════════ DRIVER SHARE ══════════════════ -->
+<div id="dShare" class="scr">
+  <div style="text-align:center;padding:8px 0;">
+    <div style="font-size:24px;font-weight:900;">رمز رحلتك 🔑</div>
+    <div style="font-size:13px;color:var(--dim);margin-top:4px;">أعطِ هذا الرمز للزبائن</div>
+  </div>
+  <div class="code-box">
+    <div class="code-lbl">رمز الاتصال المباشر</div>
+    <div class="code-val" id="driverCode">⏳</div>
+    <div class="code-hint">الزبون يفتح التطبيق ← يختار زبون ← يدخل هذا الرمز<br>يرى موقعك على الخريطة مباشرة</div>
+    <button class="share-btn" onclick="shareCode()">📤 مشاركة الرمز</button>
+  </div>
+  <div class="conn-pill cp-wait" id="connPill">
+    <div class="dot"></div><span id="connTxt">في انتظار الزبائن...</span>
+  </div>
+  <button class="main-btn btn-gold" onclick="gotoApp('driver')">🚌 ابدأ الرحلة</button>
+  <button class="main-btn btn-dim" onclick="show('land')">← رجوع</button>
 </div>
 
-<!-- ══════ TAB: LINES ══════ -->
-<div class="content" id="tLines">
+<!-- ══════════════════ PASS JOIN ══════════════════ -->
+<div id="pJoin" class="scr">
+  <div style="text-align:center;">
+    <div style="font-size:24px;font-weight:900;">أدخل رمز الرحلة 🔑</div>
+    <div style="font-size:13px;color:var(--dim);margin-top:4px;">الرمز من السائق</div>
+  </div>
+  <div class="inp-lbl">رمز الرحلة</div>
+  <input class="code-inp" id="codeInput" maxlength="20" placeholder="الصق الرمز هنا"
+    oninput="onCodeIn()" autocomplete="off" autocorrect="off" spellcheck="false">
+  <div class="conn-log" id="connLog">في انتظار الرمز...</div>
+  <button class="main-btn btn-gold" id="connectBtn" disabled onclick="connectDriver()">🔗 اتصال بالحافلة</button>
+  <button class="main-btn btn-dim" onclick="show('lineSelect')">← رجوع</button>
+</div>
 
-  <!-- Add New Line -->
-  <div class="card">
-    <div class="card-title"><span>➕</span> إضافة خط جديد</div>
-    <div class="field">
-      <div class="field-lbl">اسم الخط</div>
-      <input class="field-inp" id="newLineName" placeholder="مثال: الخط 04">
+<!-- ══════════════════ LINE SELECT ══════════════════ -->
+<div id="lineSelect" class="scr">
+  <div class="ls-head" style="padding:16px 16px 0;">
+    <div style="font-size:20px;font-weight:900;margin-bottom:4px;">اختر خط الحافلة 🗺️</div>
+    <div style="font-size:12px;color:var(--dim);">اختر الخط لتلقي تنبيهات المحطات</div>
+  </div>
+  <div id="linesList" style="padding:0 16px 16px;overflow-y:auto;flex:1;"></div>
+  <div style="padding:0 16px 20px;display:flex;flex-direction:column;gap:8px;">
+    <button class="main-btn btn-gold" id="lineNextBtn" disabled onclick="show('pJoin')">التالي ←</button>
+    <button class="main-btn btn-dim" onclick="show('land')">← رجوع</button>
+  </div>
+</div>
+
+<!-- ══════════════════ MAIN APP ══════════════════ -->
+<div id="mainApp" class="scr">
+  <div class="hdr">
+    <div class="hdr-l">
+      <div class="hdr-ico" id="hIco">🚌</div>
+      <div><div class="hdr-t" id="hTitle">—</div><div class="hdr-s" id="hSub">—</div></div>
     </div>
-    <div class="field">
-      <div class="field-lbl">المسار (من ↔ إلى)</div>
-      <input class="field-inp" id="newLineRoute" placeholder="مثال: حي السلام ↔ المركز">
+    <div class="hdr-badge" id="hBadge" onclick="shareCode()">—</div>
+  </div>
+  <div id="map"></div>
+
+  <!-- DRIVER PANEL -->
+  <div class="btm" id="dPanel" style="display:none;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="pill p-off" id="dPill"><div class="dot"></div><span id="dPillTxt">في الانتظار</span></div>
+      <div style="font-size:11px;color:var(--dim);" id="gpsAcc">GPS: --</div>
     </div>
-    <div class="field">
-      <div class="field-lbl">لون الخط</div>
-      <div class="color-grid" id="newLineColors">
-        <div class="color-dot sel" style="background:#f59e0b" onclick="pickNewColor('#f59e0b',this)"></div>
-        <div class="color-dot" style="background:#06b6d4" onclick="pickNewColor('#06b6d4',this)"></div>
-        <div class="color-dot" style="background:#10b981" onclick="pickNewColor('#10b981',this)"></div>
-        <div class="color-dot" style="background:#8b5cf6" onclick="pickNewColor('#8b5cf6',this)"></div>
-        <div class="color-dot" style="background:#ef4444" onclick="pickNewColor('#ef4444',this)"></div>
-        <div class="color-dot" style="background:#ec4899" onclick="pickNewColor('#ec4899',this)"></div>
+    <div class="stats">
+      <div class="sbox"><div class="sv" id="dSpd">0</div><div class="sl">كم/س</div></div>
+      <div class="sbox"><div class="sv" id="dDst">0.0</div><div class="sl">كم</div></div>
+      <div class="sbox"><div class="sv" id="dStp">0</div><div class="sl">محطات</div></div>
+      <div class="sbox"><div class="sv" id="dConn">0</div><div class="sl">زبائن</div></div>
+    </div>
+    <button class="abtn abtn-go" id="dBtn" onclick="toggleTracking()">▶ ابدأ وأرسل موقعك الحقيقي</button>
+    <!-- Google Maps للسائق -->
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button onclick="shareGoogleMapsLive()" style="flex:1;padding:10px;border-radius:10px;border:none;background:rgba(66,133,244,.12);color:#4285f4;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;"><img src="https://maps.google.com/mapfiles/ms/icons/blue-dot.png" style="width:14px;height:14px;" onerror="this.style.display='none'">📤 شارك موقعك في Maps</button>
+      <button onclick="openGoogleMaps()" style="flex:1;padding:10px;border-radius:10px;border:none;background:rgba(52,168,83,.12);color:#34a853;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">🗺️ افتح Maps</button>
+    </div>
+    <div style="margin-top:12px;" id="dStopsWrap"></div>
+  </div>
+
+  <!-- PASSENGER PANEL -->
+  <div class="btm" id="pPanel" style="display:none;">
+    <div class="pcard" id="pCard">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+        <div>
+          <div style="font-size:18px;font-weight:900;" id="pName">في انتظار الحافلة...</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:3px;" id="pSub">جارٍ الاتصال بالسائق</div>
+        </div>
+        <div style="font-size:26px;" id="pIco">🔴</div>
+      </div>
+      <div style="display:flex;gap:7px;margin-top:11px;flex-wrap:wrap;">
+        <div class="pill p-cyan" id="pEta">⏱ --</div>
+        <div class="pill p-warn" id="pDist">📍 --</div>
+        <div class="pill p-live" id="pSpd">⚡ --</div>
       </div>
     </div>
-    <button class="btn btn-gold" onclick="addNewLine()" style="width:100%;justify-content:center;margin-top:4px;">➕ إضافة الخط</button>
-  </div>
-
-  <!-- Lines List -->
-  <div id="linesList"></div>
-
-</div>
-
-<!-- ══════ TAB: DESIGN ══════ -->
-<div class="content" id="tDesign" style="display:none;">
-
-  <!-- Theme Colors -->
-  <div class="card">
-    <div class="card-title"><span>🎨</span> ألوان النظام</div>
-    <div id="colorRows"></div>
-    <div class="btn-row">
-      <button class="btn btn-gold" onclick="applyColors()">✅ تطبيق الألوان</button>
-      <button class="btn btn-dim" onclick="resetColors()">↩️ إعادة الضبط</button>
-    </div>
-  </div>
-
-  <!-- Typography -->
-  <div class="card">
-    <div class="card-title"><span>🔤</span> الخط والحجم</div>
-    <div class="field">
-      <div class="field-lbl">حجم النص الرئيسي</div>
-      <input type="range" min="12" max="20" value="14" oninput="this.nextElementSibling.textContent=this.value+'px'" style="width:100%;accent-color:var(--gold);">
-      <div style="font-size:12px;color:var(--gold);text-align:center;margin-top:4px;">14px</div>
-    </div>
-    <div class="field">
-      <div class="field-lbl">شكل الحواف</div>
-      <select class="field-inp" onchange="updateRadius(this.value)">
-        <option value="8">مستطيل (8px)</option>
-        <option value="14" selected>متوسط (14px)</option>
-        <option value="20">دائري (20px)</option>
-        <option value="28">دائري كامل (28px)</option>
-      </select>
-    </div>
-  </div>
-
-  <!-- App Info -->
-  <div class="card">
-    <div class="card-title"><span>ℹ️</span> معلومات التطبيق</div>
-    <div class="field">
-      <div class="field-lbl">اسم التطبيق</div>
-      <input class="field-inp" id="appName" value="نقـلي" placeholder="اسم التطبيق">
-    </div>
-    <div class="field">
-      <div class="field-lbl">اسم الشركة</div>
-      <input class="field-inp" id="companyName" value="شركة النقل" placeholder="اسم الشركة">
-    </div>
-    <div class="field">
-      <div class="field-lbl">شعار التطبيق (إيموجي)</div>
-      <input class="field-inp" id="appEmoji" value="🚌" placeholder="🚌" style="font-size:24px;text-align:center;">
-    </div>
-    <button class="btn btn-gold" onclick="applyAppInfo()" style="width:100%;justify-content:center;">✅ تطبيق</button>
-  </div>
-
-</div>
-
-<!-- ══════ TAB: CODE ══════ -->
-<div class="content" id="tCode" style="display:none;">
-
-  <!-- Search & Replace -->
-  <div class="card">
-    <div class="card-title"><span>🔍</span> بحث واستبدال</div>
-    <div class="search-row">
-      <input class="search-inp" id="searchTxt" placeholder="نص البحث...">
-      <input class="search-inp" id="replaceTxt" placeholder="نص البديل...">
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-blue" onclick="findInCode()">🔍 بحث</button>
-      <button class="btn btn-gold" onclick="replaceInCode()">↔️ استبدال</button>
-      <button class="btn btn-dim" onclick="replaceAllInCode()">↔️ كل</button>
-    </div>
-    <div id="searchResult" style="font-size:12px;color:var(--dim);margin-top:8px;"></div>
-  </div>
-
-  <!-- Quick Edits -->
-  <div class="card">
-    <div class="card-title"><span>⚡</span> تعديلات سريعة</div>
-    <div style="display:flex;flex-direction:column;gap:8px;">
-      <button class="btn btn-green" onclick="quickEdit('lines')" style="justify-content:flex-start;">🗺️ تحديث بيانات الخطوط في الكود</button>
-      <button class="btn btn-blue" onclick="quickEdit('colors')" style="justify-content:flex-start;">🎨 تحديث الألوان في الكود</button>
-      <button class="btn btn-dim" onclick="quickEdit('info')" style="justify-content:flex-start;">ℹ️ تحديث معلومات التطبيق</button>
-      <button class="btn btn-gold" onclick="formatCode()" style="justify-content:flex-start;">✨ تنسيق الكود</button>
-    </div>
-  </div>
-
-  <!-- Code Editor -->
-  <div class="card">
-    <div class="card-title"><span>💻</span> محرر الكود المباشر</div>
-    <div class="code-toolbar">
-      <button class="btn btn-dim" onclick="insertSnippet('stop')" style="font-size:11px;">📍 محطة</button>
-      <button class="btn btn-dim" onclick="insertSnippet('line')" style="font-size:11px;">🗺️ خط</button>
-      <button class="btn btn-dim" onclick="insertSnippet('bus')" style="font-size:11px;">🚌 حافلة</button>
-      <button class="btn btn-dim" onclick="insertSnippet('alert')" style="font-size:11px;">🔔 تنبيه</button>
-      <button class="btn btn-dim" onclick="codeUndo()" style="font-size:11px;">↩️ تراجع</button>
-    </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-      <div style="font-size:11px;color:var(--dim);" id="lineCount">0 سطر</div>
-      <div style="display:flex;gap:6px;">
-        <button class="btn btn-green" onclick="applyCode()" style="font-size:11px;padding:6px 12px;">▶ تطبيق</button>
-        <button class="btn btn-dim" onclick="copyCode()" style="font-size:11px;padding:6px 12px;">📋 نسخ</button>
+    <div id="pStopsWrap"></div>
+    <!-- Google Maps Bar -->
+    <div style="background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);border-radius:12px;padding:10px 12px;margin-bottom:8px;">
+      <div style="font-size:11px;color:var(--green);font-weight:700;margin-bottom:8px;">🗺️ Google Maps — الموقع الحقيقي</div>
+      <div style="display:flex;gap:6px;margin-bottom:6px;">
+        <button onclick="openGoogleMaps()" style="flex:1;padding:9px 6px;border-radius:9px;border:none;background:rgba(66,133,244,.15);color:#4285f4;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">📍 افتح Maps</button>
+        <button onclick="openGoogleMapsRoute()" style="flex:1;padding:9px 6px;border-radius:9px;border:none;background:rgba(52,168,83,.15);color:#34a853;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">🧭 المسار</button>
+        <button onclick="shareGoogleMapsLive()" style="flex:1;padding:9px 6px;border-radius:9px;border:none;background:rgba(251,188,4,.15);color:#fbbc04;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">📤 مشاركة</button>
+        <button id="gmapsTrackBtn" onclick="toggleGoogleMapsTracking()" style="flex:1;padding:9px 6px;border-radius:9px;border:none;background:rgba(234,67,53,.15);color:#ea4335;font-family:'Cairo',sans-serif;font-size:11px;font-weight:700;cursor:pointer;">🗺️ تتبع</button>
       </div>
+      <div style="font-size:11px;color:var(--dim);">رابط حي: <a id="gmapsLiveLink" href="#" target="_blank" style="color:var(--cyan);">اضغط "تتبع" لتفعيله</a></div>
     </div>
-    <textarea class="code-area" id="codeEditor" spellcheck="false" oninput="onCodeEdit(this)"></textarea>
+    <div class="brow">
+      <button class="abtn-sec" onclick="testVoice()">🔊 صوت</button>
+      <button class="abtn-sec" onclick="centerBus()">🎯 تتبع</button>
+      <button class="abtn-sec" onclick="showSchedule()">📅 مواعيد</button>
+      <button class="abtn-sec" onclick="showRate()">⭐ تقييم</button>
+    </div>
   </div>
 
+  <!-- ADMIN PANEL -->
+  <div class="btm" id="aPanel" style="display:none;max-height:60vh;">
+    <div class="admin-tabs">
+      <button class="atab on" onclick="aTab(this,'aStats')">📊</button>
+      <button class="atab" onclick="aTab(this,'aFleet')">🚌</button>
+      <button class="atab" onclick="aTab(this,'aLines')">🗺️</button>
+    </div>
+    <!-- Stats -->
+    <div id="aStats" style="padding-top:12px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+        <div class="sbox" style="padding:14px;"><div class="sv" style="font-size:24px;" id="adBus">3</div><div class="sl">🚌 الحافلات</div></div>
+        <div class="sbox" style="padding:14px;"><div class="sv" style="font-size:24px;color:var(--green);" id="adActive">2</div><div class="sl">✅ نشطة</div></div>
+        <div class="sbox" style="padding:14px;"><div class="sv" style="font-size:24px;color:var(--cyan);" id="adPass">0</div><div class="sl">👤 ركاب</div></div>
+        <div class="sbox" style="padding:14px;"><div class="sv" style="font-size:24px;color:var(--purple);">4.7⭐</div><div class="sl">متوسط التقييم</div></div>
+      </div>
+      <div class="chart-wrap" id="chartWrap"></div>
+    </div>
+    <!-- Fleet -->
+    <div id="aFleet" style="display:none;padding-top:12px;" id="aFleet"></div>
+    <!-- Lines editor -->
+    <div id="aLines" style="display:none;padding-top:12px;"></div>
+  </div>
+
+  <!-- TAB BAR -->
+  <div class="tab-bar" id="tabBar" style="display:none;">
+    <button class="tab on" onclick="switchTab(this,'dPanel')">🚌<span>السائق</span></button>
+    <button class="tab" onclick="switchTab(this,'pPanel')">👤<span>الزبون</span></button>
+    <button class="tab" onclick="switchTab(this,'aPanel')">🖥️<span>المشرف</span></button>
+  </div>
 </div>
 
-<!-- ══════ TAB: EXPORT ══════ -->
-<div class="content" id="tExport" style="display:none;">
-
-  <div class="export-card">
-    <div class="export-title">📦 تصدير الملف الكامل</div>
-    <div class="export-sub">يُصدر ملف HTML واحد يحتوي على كل التعديلات جاهز للنشر على GitHub</div>
-    <button class="btn btn-gold" onclick="exportApp()" style="width:100%;justify-content:center;">💾 تحميل naqli-final.html</button>
-  </div>
-
-  <div class="export-card" style="border-color:rgba(6,182,212,.2);background:rgba(6,182,212,.05);">
-    <div class="export-title" style="color:var(--cyan);">📋 نسخ الكود</div>
-    <div class="export-sub">انسخ الكود الكامل والصقه في GitHub أو أي محرر</div>
-    <button class="btn btn-blue" onclick="copyFullCode()" style="width:100%;justify-content:center;">📋 نسخ الكود الكامل</button>
-  </div>
-
-  <div class="export-card" style="border-color:rgba(139,92,246,.2);background:rgba(139,92,246,.05);">
-    <div class="export-title" style="color:var(--purple);">☁️ رفع على GitHub</div>
-    <div class="export-sub">
-      1. اضغط "تحميل" أعلاه<br>
-      2. افتح github.com/salab0732-netizen/ناقلي-باص<br>
-      3. ارفع الملف باسم index.html<br>
-      4. انتظر دقيقة والرابط يعمل ✅
+<!-- ══════════════════ SCHEDULE MODAL ══════════════════ -->
+<div id="schedModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;backdrop-filter:blur(8px);overflow-y:auto;padding:20px;">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:20px;padding:20px;max-width:400px;margin:0 auto;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div style="font-size:17px;font-weight:900;">📅 جدول المواعيد</div>
+      <button onclick="closeModal('schedModal')" style="background:none;border:none;color:var(--text2);font-size:22px;cursor:pointer;">×</button>
     </div>
-    <a href="https://github.com/salab0732-netizen" target="_blank" class="btn btn-dim" style="width:100%;justify-content:center;text-decoration:none;">🔗 فتح GitHub</a>
+    <div id="schedContent"></div>
+  </div>
+</div>
+
+<!-- ══════════════════ RATE MODAL ══════════════════ -->
+<div id="rateModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;backdrop-filter:blur(8px);overflow-y:auto;padding:20px;">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:20px;padding:20px;max-width:400px;margin:0 auto;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div style="font-size:17px;font-weight:900;">⭐ تقييم الرحلة</div>
+      <button onclick="closeModal('rateModal')" style="background:none;border:none;color:var(--text2);font-size:22px;cursor:pointer;">×</button>
+    </div>
+    <div id="rateContent"></div>
+  </div>
+</div>
+
+<!-- ══════════════════ GUIDE ══════════════════ -->
+<div id="guide" class="scr">
+  <div style="display:flex;align-items:center;gap:10px;padding:14px 0 0;">
+    <button onclick="show('land')" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;padding:4px;">←</button>
+    <div style="font-size:18px;font-weight:900;">📖 دليل الاستخدام الكامل</div>
   </div>
 
-  <div class="card">
-    <div class="card-title"><span>📊</span> إحصائيات الملف</div>
-    <div id="fileStats" style="font-size:13px;color:var(--text2);line-height:2;"></div>
+  <!-- HOW IT WORKS -->
+  <div class="guide-section">
+    <div class="guide-title">🔍 كيف يعمل التطبيق؟</div>
+    <p style="font-size:13px;color:var(--text2);line-height:1.8;">
+      يعمل التطبيق على مبدأ الاتصال المباشر بين هاتف السائق وهاتف الزبون عبر تقنية <b style="color:var(--gold);">PeerJS</b>.
+      السائق يرسل موقع GPS الحقيقي كل ثانيتين، والزبون يستقبله مباشرة على خريطة حقيقية.
+    </p>
+    <div class="tip-box">
+      💡 لا يحتاج التطبيق إلى سيرفر خاص أو Firebase أو أي إعداد معقد — كل شيء يعمل عبر الإنترنت مباشرة بين الهاتفين.
+    </div>
   </div>
 
+  <!-- DRIVER GUIDE -->
+  <div class="guide-section">
+    <div class="guide-title">🚌 دليل السائق</div>
+    <div class="guide-step"><div class="step-num">1</div><div class="step-txt"><b>افتح التطبيق</b> على هاتفك عبر رابط HTTPS (بعد النشر على GitHub Pages)</div></div>
+    <div class="guide-step"><div class="step-num">2</div><div class="step-txt"><b>اختر "السائق"</b> من الشاشة الرئيسية ثم اضغط "ابدأ"</div></div>
+    <div class="guide-step"><div class="step-num">3</div><div class="step-txt"><b>انتظر ظهور الرمز</b> — رمز من 8 أحرف مثل <b style="color:var(--gold);">A3F9B2C1</b></div></div>
+    <div class="guide-step"><div class="step-num">4</div><div class="step-txt"><b>شارك الرمز</b> مع الزبائن عبر واتساب أو رسالة نصية</div></div>
+    <div class="guide-step"><div class="step-num">5</div><div class="step-txt"><b>اضغط "ابدأ الرحلة"</b> ← اسمح بالوصول للموقع عند الطلب</div></div>
+    <div class="guide-step"><div class="step-num">6</div><div class="step-txt"><b>GPS يعمل تلقائياً</b> — موقعك يُرسل للزبائن كل ثانيتين</div></div>
+    <div class="warn-box">⚠️ يجب فتح التطبيق من رابط HTTPS وليس من ملف محلي — GPS لا يعمل على الملفات المحلية لأسباب أمنية.</div>
+  </div>
+
+  <!-- PASSENGER GUIDE -->
+  <div class="guide-section">
+    <div class="guide-title">👤 دليل الزبون</div>
+    <div class="guide-step"><div class="step-num">1</div><div class="step-txt"><b>افتح نفس رابط التطبيق</b> على هاتفك</div></div>
+    <div class="guide-step"><div class="step-num">2</div><div class="step-txt"><b>اختر "الزبون"</b> ثم اختر الخط المناسب</div></div>
+    <div class="guide-step"><div class="step-num">3</div><div class="step-txt"><b>أدخل الرمز</b> الذي أرسله لك السائق واضغط "اتصال"</div></div>
+    <div class="guide-step"><div class="step-num">4</div><div class="step-txt"><b>شاهد الحافلة</b> تتحرك على الخريطة مباشرة</div></div>
+    <div class="guide-step"><div class="step-num">5</div><div class="step-txt"><b>تلقّ تنبيهات صوتية</b> تلقائياً عند اقتراب الحافلة</div></div>
+    <div class="tip-box">🔊 التنبيهات الصوتية: عند 1 كم "الحافلة اقتربت" — عند 500م "استعد" — عند الوصول "الحافلة وصلت"</div>
+  </div>
+
+  <!-- ADMIN GUIDE -->
+  <div class="guide-section">
+    <div class="guide-title">🖥️ دليل المشرف</div>
+    <div class="guide-step"><div class="step-num">1</div><div class="step-txt"><b>📊 الإحصائيات:</b> رسوم بيانية للركاب والرحلات وتقييمات السائقين</div></div>
+    <div class="guide-step"><div class="step-num">2</div><div class="step-txt"><b>🚌 الأسطول:</b> حالة كل حافلة — نشطة أو متوقفة — مع السرعة والركاب</div></div>
+    <div class="guide-step"><div class="step-num">3</div><div class="step-txt"><b>🗺️ الخطوط:</b> أضف أو احذف محطات من أي خط بسهولة</div></div>
+  </div>
+
+  <!-- GOOGLE MAPS GUIDE -->
+  <div class="guide-section">
+    <div class="guide-title">🗺️ استخدام Google Maps</div>
+    <div class="guide-step"><div class="step-num">📍</div><div class="step-txt"><b>افتح Maps:</b> يفتح Google Maps مباشرة على موقع الحافلة الحقيقي</div></div>
+    <div class="guide-step"><div class="step-num">🧭</div><div class="step-txt"><b>المسار:</b> يفتح Google Maps مع مسار من موقعك للحافلة — مفيد لمعرفة كيف تصل للمحطة</div></div>
+    <div class="guide-step"><div class="step-num">📤</div><div class="step-txt"><b>مشاركة:</b> ينسخ رابط Google Maps للحافلة — أرسله لأي شخص ليرى الموقع</div></div>
+    <div class="guide-step"><div class="step-num">🔴</div><div class="step-txt"><b>تتبع حي:</b> يفتح Google Maps ويُحدّث الرابط كل 3 ثوانٍ تلقائياً</div></div>
+    <div class="tip-box">💡 الرابط الحي يتغير مع تحرك الحافلة — يمكن مشاركته مع الزبائن مباشرة عبر واتساب</div>
+  </div>
+
+  <!-- DEPLOY GUIDE -->
+  <div class="guide-section">
+    <div class="guide-title">🚀 النشر على الإنترنت مجاناً</div>
+    <div class="guide-step"><div class="step-num">1</div><div class="step-txt">افتح <b style="color:var(--cyan);">github.com</b> وأنشئ حساباً مجانياً</div></div>
+    <div class="guide-step"><div class="step-num">2</div><div class="step-txt">أنشئ مستودعاً جديداً باسم <b>naqli-bus</b> واجعله <b>Public</b></div></div>
+    <div class="guide-step"><div class="step-num">3</div><div class="step-txt">ارفع هذا الملف وغيّر اسمه إلى <b>index.html</b></div></div>
+    <div class="guide-step"><div class="step-num">4</div><div class="step-txt">اذهب لـ <b>Settings → Pages → Branch: main → Save</b></div></div>
+    <div class="guide-step"><div class="step-num">5</div><div class="step-txt">رابطك سيكون:<br><b style="color:var(--gold);">https://اسمك.github.io/naqli-bus</b></div></div>
+    <div class="tip-box">✅ بعد النشر GPS يعمل فوراً على أي هاتف — فقط افتح الرابط واسمح بالموقع</div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="guide-section">
+    <div class="guide-title">❓ أسئلة شائعة</div>
+    <div style="font-size:13px;color:var(--text2);line-height:2;">
+      <div style="color:var(--gold);font-weight:700;margin-bottom:4px;">GPS لا يعمل؟</div>
+      <div style="margin-bottom:14px;">يجب فتح التطبيق من رابط HTTPS ليس ملف محلي. استخدم GitHub Pages أو أي استضافة مجانية.</div>
+      <div style="color:var(--gold);font-weight:700;margin-bottom:4px;">الزبون لا يرى الحافلة؟</div>
+      <div style="margin-bottom:14px;">تأكد أن الرمز صحيح وأن السائق ضغط "ابدأ الرحلة" وأن كلا الهاتفين متصلان بالإنترنت.</div>
+      <div style="color:var(--gold);font-weight:700;margin-bottom:4px;">هل يعمل بدون إنترنت؟</div>
+      <div style="margin-bottom:14px;">لا — يحتاج الاتصال بين الهاتفين لإنترنت (واي فاي أو بيانات).</div>
+      <div style="color:var(--gold);font-weight:700;margin-bottom:4px;">كم عدد الزبائن الذين يمكنهم الاتصال؟</div>
+      <div>يمكن للعديد من الزبائن استخدام نفس الرمز في نفس الوقت.</div>
+    </div>
+  </div>
 </div>
 
 <!-- TOAST -->
 <div id="toast">
-  <div style="font-size:20px;flex-shrink:0;" id="tIco">✅</div>
-  <div><div style="font-size:13px;font-weight:700;" id="tTxt">—</div><div style="font-size:11px;color:var(--text2);" id="tSub">—</div></div>
-</div>
-
-<!-- CONFIRM -->
-<div id="confirm" style="display:none;">
-  <div class="confirm-box">
-    <div class="confirm-title" id="confirmTitle">تأكيد</div>
-    <div class="confirm-msg" id="confirmMsg">هل أنت متأكد؟</div>
-    <div class="confirm-btns">
-      <button class="btn btn-red" style="flex:1;justify-content:center;" id="confirmYes">نعم</button>
-      <button class="btn btn-dim" style="flex:1;justify-content:center;" onclick="closeConfirm()">إلغاء</button>
-    </div>
-  </div>
+  <div style="font-size:22px;flex-shrink:0;" id="tIco">📍</div>
+  <div><div style="font-size:14px;font-weight:700;" id="tTxt">—</div><div style="font-size:12px;color:var(--text2);" id="tSub">—</div></div>
 </div>
 
 <script>
-// ════════════════════════════════════════
-//  THE APP DATA (نسخة من naqli)
-// ════════════════════════════════════════
+// ════════════════════════════════════════════════
+//  DATA
+// ════════════════════════════════════════════════
 let LINES = [
   {id:1,name:"الخط 01",color:"#f59e0b",bg:"rgba(245,158,11,.15)",route:"المحطة الرئيسية ↔ الجامعة",
    schedule:["06:00","07:30","09:00","11:00","13:30","16:00","18:30","20:00"],
@@ -359,493 +530,619 @@ let LINES = [
    stops:[{id:"s10",name:"الحي الصناعي",lat:36.7500,lng:3.0750},{id:"s11",name:"منطقة B",lat:36.7480,lng:3.0820},{id:"s12",name:"الإدارة",lat:36.7455,lng:3.0890},{id:"s13",name:"البلدية",lat:36.7430,lng:3.0960}]},
 ];
 
-let COLORS = {
-  '--bg':'#060b14','--s1':'#080e1a','--s2':'#0c1422',
-  '--card':'#101828','--gold':'#f59e0b','--cyan':'#06b6d4',
-  '--green':'#10b981','--red':'#ef4444','--purple':'#8b5cf6',
-  '--text':'#e2eaf4','--text2':'#8ba4be',
+const FLEET = [
+  {id:"BUS-01",line:1,driver:"محمد أمين",status:"live",speed:32,passengers:18,rating:4.8,trips:142},
+  {id:"BUS-02",line:2,driver:"كريم بلال",status:"live",speed:24,passengers:11,rating:4.5,trips:98},
+  {id:"BUS-03",line:3,driver:"يوسف حاج",status:"off",speed:0,passengers:0,rating:4.7,trips:117},
+];
+
+const CHART_DATA = {
+  pass:[45,62,38,71,84,58,92,101,67,88,95,102],
+  trips:[8,11,7,13,15,11,16,18,13,16,17,19],
+  lbls:["06","07","08","09","10","11","12","13","14","15","16","17"],
 };
 
-let COLOR_LABELS = {
-  '--bg':'خلفية التطبيق','--s1':'خلفية الهيدر','--s2':'خلفية ثانوية',
-  '--card':'لون البطاقات','--gold':'اللون الذهبي','--cyan':'اللون الأزرق',
-  '--green':'اللون الأخضر','--red':'اللون الأحمر','--purple':'اللون البنفسجي',
-  '--text':'لون النص','--text2':'لون النص الثانوي',
-};
+// ════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════
+let role=null, selLine=null, myPeerId='', peer=null, connections=[], driverConn=null;
+let map=null, busMarker=null, myMarker=null, routePolyline=null, stopMarkers=[];
+let routeCoords=[], tracking=false, watchId=null;
+let totalDist=0, stopCnt=0, stationaryT=0, lastLL=null, myLL=null;
+let alerts={km1:false,m500:false,here:false}, passCnt=0;
+let userRating=0;
 
-let newLineColor = '#f59e0b';
-let appCode = ''; // Will hold the full naqli app code
-let editingLines = {};
-let codeHistory = [];
+// ════════════════════════════════════════════════
+//  SCREENS
+// ════════════════════════════════════════════════
+function show(id){document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));document.getElementById(id).classList.add('on');}
 
-// ════════════════════════════════════════
-//  INIT
-// ════════════════════════════════════════
-window.onload = () => {
-  renderLines();
-  renderColorRows();
-  updateFileStats();
-  // Load placeholder code
-  appCode = generateAppCode();
-  document.getElementById('codeEditor').value = appCode;
-  updateLineCount();
-};
-
-// ════════════════════════════════════════
-//  TABS
-// ════════════════════════════════════════
-function switchTab(btn, id) {
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
-  btn.classList.add('on');
-  ['tLines','tDesign','tCode','tExport'].forEach(t=>document.getElementById(t).style.display='none');
-  document.getElementById(id).style.display='block';
-  if(id==='tExport') updateFileStats();
-  if(id==='tCode'){appCode=generateAppCode();document.getElementById('codeEditor').value=appCode;updateLineCount();}
+function pickRole(r){
+  role=r;
+  ['rD','rP','rA','rG'].forEach(id=>document.getElementById(id).classList.remove('sel'));
+  const map2={driver:'rD',passenger:'rP',admin:'rA',guide:'rG'};
+  document.getElementById(map2[r]).classList.add('sel');
+  document.getElementById('landBtn').disabled=false;
 }
 
-// ════════════════════════════════════════
-//  LINES MANAGEMENT
-// ════════════════════════════════════════
-function renderLines() {
-  const c = document.getElementById('linesList');
-  c.innerHTML = LINES.map(l => `
-    <div class="line-card ${editingLines[l.id]?'editing':''}" id="lc${l.id}">
-      <div class="line-header">
-        <div class="line-num" style="background:${l.bg};color:${l.color};">${l.id}</div>
-        <div style="flex:1;">
-          <div class="line-name">${l.name}</div>
-          <div class="line-route">${l.route}</div>
-        </div>
-        <div style="display:flex;gap:6px;">
-          <button class="edit-toggle ${editingLines[l.id]?'on':''}" onclick="toggleLineEdit(${l.id})">
-            ${editingLines[l.id]?'✓ حفظ':'✏️ تعديل'}
-          </button>
-          <button class="stop-del" onclick="deleteLine(${l.id})" style="width:32px;height:32px;border-radius:8px;">🗑️</button>
+function goNext(){
+  if(role==='driver')    initDriverPeer();
+  else if(role==='passenger') {renderLines(); show('lineSelect');}
+  else if(role==='admin')     {show('mainApp'); initAdminApp();}
+  else if(role==='guide')     show('guide');
+}
+
+// ════════════════════════════════════════════════
+//  RENDER LINES
+// ════════════════════════════════════════════════
+function renderLines(){
+  const c=document.getElementById('linesList');
+  const nowTime=()=>{const d=new Date();return`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;};
+  c.innerHTML=LINES.map(l=>{
+    const next=l.schedule.find(t=>t>nowTime())||l.schedule[0];
+    return`<div class="line-item" id="li${l.id}" onclick="pickLine(${l.id})">
+      <div class="li-num" style="background:${l.bg};color:${l.color};">${l.id}</div>
+      <div style="flex:1;">
+        <div class="li-name">${l.name}</div>
+        <div class="li-route">${l.route}</div>
+        <div class="li-tags">
+          <span class="li-tag" style="background:${l.bg};color:${l.color};">${l.stops.length} محطات</span>
+          <span class="li-tag" style="background:rgba(6,182,212,.1);color:#06b6d4;">⏱ ${next}</span>
         </div>
       </div>
-      <div class="line-body ${editingLines[l.id]?'on':''}" id="lb${l.id}">
-        <!-- Basic Info -->
-        <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">
-          <div class="field">
-            <div class="field-lbl">اسم الخط</div>
-            <input class="field-inp" id="ln${l.id}" value="${l.name}" oninput="updateLineField(${l.id},'name',this.value)">
-          </div>
-          <div class="field">
-            <div class="field-lbl">المسار</div>
-            <input class="field-inp" id="lr${l.id}" value="${l.route}" oninput="updateLineField(${l.id},'route',this.value)">
-          </div>
-          <div class="field">
-            <div class="field-lbl">لون الخط</div>
-            <div style="display:flex;gap:8px;align-items:center;">
-              <div class="color-grid" style="grid-template-columns:repeat(6,1fr);flex:1;">
-                ${['#f59e0b','#06b6d4','#10b981','#8b5cf6','#ef4444','#ec4899','#3b82f6','#f97316','#14b8a6','#a855f7','#6366f1','#84cc16'].map(c=>`
-                  <div class="color-dot ${l.color===c?'sel':''}" style="background:${c};width:28px;height:28px;" onclick="updateLineColor(${l.id},'${c}',this)"></div>`).join('')}
-              </div>
-              <input type="color" value="${l.color}" onchange="updateLineColor(${l.id},this.value,null)" style="width:36px;height:36px;border-radius:8px;border:none;cursor:pointer;background:none;">
-            </div>
-          </div>
-        </div>
+      <div style="font-size:18px;color:var(--dim);">←</div>
+    </div>`;
+  }).join('');
+}
 
-        <!-- Stops -->
-        <div style="margin-top:12px;">
-          <div style="font-size:11px;color:var(--dim);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">
-            المحطات (${l.stops.length})
-          </div>
-          <div id="stops${l.id}">
-            ${l.stops.map((s,i)=>`
-              <div class="stop-row" id="sr_${s.id}">
-                <div class="stop-num" style="background:${l.bg};color:${l.color};">${i+1}</div>
-                <input class="stop-inp" value="${s.name}" onchange="updateStopName(${l.id},'${s.id}',this.value)" placeholder="اسم المحطة">
-                <button class="stop-del" onclick="removeStop(${l.id},'${s.id}')">×</button>
-              </div>`).join('')}
-          </div>
-          <div class="add-stop-row">
-            <input class="add-stop-inp" id="ns${l.id}" placeholder="اسم المحطة الجديدة..." onkeydown="if(event.key==='Enter')addStop(${l.id})">
-            <button class="add-stop-btn" onclick="addStop(${l.id})">+ إضافة</button>
-          </div>
-        </div>
+function pickLine(id){
+  selLine=LINES.find(l=>l.id===id);
+  document.querySelectorAll('.line-item').forEach(e=>e.classList.remove('sel'));
+  document.getElementById('li'+id).classList.add('sel');
+  document.getElementById('lineNextBtn').disabled=false;
+}
 
-        <!-- Schedule -->
-        <div style="margin-top:12px;">
-          <div style="font-size:11px;color:var(--dim);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">
-            مواعيد الرحلات
-          </div>
-          <div class="sched-wrap" id="sched${l.id}">
-            ${l.schedule.map(t=>`
-              <div class="sched-tag">
-                ${t}
-                <button class="sched-del" onclick="removeSchedule(${l.id},'${t}')">×</button>
-              </div>`).join('')}
-          </div>
-          <div class="add-stop-row" style="margin-top:8px;">
-            <input type="time" id="nt${l.id}" class="add-stop-inp" style="direction:ltr;">
-            <button class="add-stop-btn" onclick="addSchedule(${l.id})">+ إضافة</button>
-          </div>
+// ════════════════════════════════════════════════
+//  DRIVER — PEERJS
+// ════════════════════════════════════════════════
+function initDriverPeer(){
+  show('dShare');
+  document.getElementById('driverCode').textContent='⏳';
+  peer=new Peer(undefined,{config:{iceServers:[
+    {urls:'stun:stun.l.google.com:19302'},
+    {urls:'stun:stun1.l.google.com:19302'},
+    {urls:'stun:stun2.l.google.com:19302'},
+  ]}});
+  peer.on('open',id=>{
+    myPeerId=id;
+    document.getElementById('driverCode').textContent=id.substring(0,8).toUpperCase();
+    toast('✅','جاهز للاتصال','شارك الرمز مع الزبائن');
+  });
+  peer.on('connection',conn=>{
+    connections.push(conn); passCnt=connections.length;
+    conn.on('open',()=>{
+      document.getElementById('connPill').className='conn-pill cp-conn';
+      document.getElementById('connTxt').textContent=`✅ ${connections.length} زبون متصل`;
+      document.getElementById('dConn').textContent=connections.length;
+      toast('👤','زبون متصل!',`إجمالي: ${connections.length}`);
+    });
+    conn.on('close',()=>{connections=connections.filter(c=>c!==conn);passCnt=connections.length;document.getElementById('dConn').textContent=connections.length;});
+  });
+  peer.on('error',e=>toast('❌','خطأ PeerJS',e.type||e.message));
+}
+
+// ════════════════════════════════════════════════
+//  PASSENGER — PEERJS
+// ════════════════════════════════════════════════
+function onCodeIn(){
+  const v=document.getElementById('codeInput').value.trim();
+  document.getElementById('connectBtn').disabled=v.length<4;
+}
+
+function connectDriver(){
+  const code=document.getElementById('codeInput').value.trim().toLowerCase();
+  if(!code)return;
+  clog('جارٍ الاتصال...');
+  document.getElementById('connectBtn').disabled=true;
+  peer=new Peer(undefined,{config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]}});
+  peer.on('open',()=>{
+    driverConn=peer.connect(code,{reliable:true});
+    driverConn.on('open',()=>{clog('✅ متصل بالسائق!');toast('✅','متصل بالحافلة!','GPS مباشر');setTimeout(()=>gotoApp('passenger'),600);});
+    driverConn.on('data',d=>{if(d.type==='gps')updatePassengerGPS(d);});
+    driverConn.on('close',()=>{toast('🔴','انقطع الاتصال','');document.getElementById('pIco').textContent='🔴';});
+    driverConn.on('error',()=>{clog('❌ فشل — تأكد من الرمز');document.getElementById('connectBtn').disabled=false;});
+  });
+  peer.on('error',e=>{clog('❌ خطأ: '+(e.type||e.message));document.getElementById('connectBtn').disabled=false;});
+  setTimeout(()=>{if(!driverConn||!driverConn.open){clog('⏱ انتهت المهلة');document.getElementById('connectBtn').disabled=false;}},15000);
+}
+
+function clog(m){const el=document.getElementById('connLog');if(el)el.textContent=m;}
+
+// ════════════════════════════════════════════════
+//  GOTO APP
+// ════════════════════════════════════════════════
+function gotoApp(r){
+  role=r;
+  show('mainApp');
+  document.getElementById('hIco').textContent=r==='driver'?'🚌':r==='passenger'?'👤':'🖥️';
+  document.getElementById('hTitle').textContent=r==='driver'?'واجهة السائق':r==='passenger'?'واجهة الزبون':'لوحة التحكم';
+  document.getElementById('hSub').textContent=r==='driver'?`رمز: ${document.getElementById('driverCode').textContent}`:selLine?selLine.name:'المشرف';
+  document.getElementById('hBadge').textContent=r==='driver'?document.getElementById('driverCode').textContent:'🟢 مباشر';
+  document.getElementById('hBadge').className='hdr-badge '+(r==='driver'?'hb-code':'hb-live');
+  document.getElementById('tabBar').style.display='flex';
+  // Show correct panel
+  ['dPanel','pPanel','aPanel'].forEach(id=>document.getElementById(id).style.display='none');
+  const panelMap={driver:'dPanel',passenger:'pPanel',admin:'aPanel'};
+  document.getElementById(panelMap[r]).style.display='block';
+  initMap(r);
+  if(r==='passenger'){
+    renderPassengerStops();
+    getMyLocation();
+    toast('👀','متصل بالحافلة','GPS مباشر');
+  }
+  if(r==='admin') renderAdminPanels();
+}
+
+// ════════════════════════════════════════════════
+//  MAP INIT
+// ════════════════════════════════════════════════
+function initMap(r){
+  const center=[36.7372,3.0869];
+  map=L.map('map',{zoomControl:false,attributionControl:false}).setView(center,14);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+  L.control.zoom({position:'topleft'}).addTo(map);
+  const busIco=L.divIcon({html:`<div style="width:46px;height:46px;background:linear-gradient(135deg,#f59e0b,#c47f0a);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 0 28px rgba(245,158,11,.8);border:3px solid rgba(255,255,255,.3);">🚌</div>`,iconSize:[46,46],iconAnchor:[23,23],className:''});
+  busMarker=L.marker(center,{icon:busIco}).addTo(map);
+  routePolyline=L.polyline([],{color:'#10b981',weight:4,opacity:.85}).addTo(map);
+  // Draw line route
+  const lineToShow=selLine||(r==='driver'?LINES[0]:null);
+  if(lineToShow){
+    const coords=lineToShow.stops.map(s=>[s.lat,s.lng]);
+    L.polyline(coords,{color:lineToShow.color,weight:2,opacity:.4,dashArray:'6,8'}).addTo(map);
+    map.fitBounds(coords,{padding:[40,40]});
+    lineToShow.stops.forEach((s,i)=>{
+      const ico=L.divIcon({html:`<div style="width:24px;height:24px;background:${lineToShow.bg};border:2px solid ${lineToShow.color};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:${lineToShow.color};">${i+1}</div>`,iconSize:[24,24],iconAnchor:[12,12],className:''});
+      const m=L.marker([s.lat,s.lng],{icon:ico}).addTo(map);
+      m.bindPopup(`<b style="font-family:Cairo">${s.name}</b>`);
+      stopMarkers.push(m);
+    });
+  }
+  if(r==='driver') renderDriverStops();
+}
+
+// ════════════════════════════════════════════════
+//  DRIVER GPS
+// ════════════════════════════════════════════════
+function toggleTracking(){
+  tracking=!tracking;
+  const btn=document.getElementById('dBtn');
+  if(tracking){
+    btn.className='abtn abtn-stop'; btn.innerHTML='⏹ إيقاف الرحلة';
+    document.getElementById('dPill').className='pill p-live';
+    document.getElementById('dPillTxt').textContent='يبث GPS الحقيقي';
+    totalDist=0; stopCnt=0; routeCoords=[]; lastLL=null; stationaryT=0;
+    routePolyline.setLatLngs([]);
+    startGPS();
+    toast('🟢','بدأت الرحلة','GPS حقيقي نشط');
+    speak('بدأت رحلتك. طريق سالم.');
+  } else {
+    btn.className='abtn abtn-go'; btn.innerHTML='▶ ابدأ وأرسل موقعك الحقيقي';
+    document.getElementById('dPill').className='pill p-off';
+    document.getElementById('dPillTxt').textContent='في الانتظار';
+    if(watchId)navigator.geolocation.clearWatch(watchId);
+    broadcast({type:'gps',status:'stopped'});
+    toast('✅','انتهت الرحلة',`${stopCnt} محطات — ${totalDist.toFixed(1)} كم`);
+    speak('انتهت الرحلة. شكراً.');
+  }
+}
+
+function startGPS(){
+  if(!navigator.geolocation){toast('❌','GPS غير متاح','استخدم Chrome');return;}
+  navigator.geolocation.getCurrentPosition(p=>{
+    onGPS(p);
+    watchId=navigator.geolocation.watchPosition(onGPS,gpsErr,{enableHighAccuracy:true,maximumAge:2000,timeout:15000});
+  },gpsErr,{enableHighAccuracy:true,timeout:15000});
+}
+
+function gpsErr(e){toast('⚠️','خطأ GPS',e.code===1?'اسمح بالوصول للموقع في المتصفح':e.message);}
+
+function onGPS(pos){
+  if(!tracking)return;
+  const{latitude:lat,longitude:lng,speed,accuracy}=pos.coords;
+  const kmh=speed!=null?Math.round(Math.max(0,speed>10?speed:speed*3.6)):0;
+  const ll=[lat,lng];
+  busMarker.setLatLng(ll); map.panTo(ll);
+  routeCoords.push(ll); if(routeCoords.length>800)routeCoords.shift();
+  routePolyline.setLatLngs(routeCoords);
+  if(lastLL){const d=hav(lastLL[0],lastLL[1],lat,lng);if(d<0.5)totalDist+=d;}
+  lastLL=ll;
+  if(kmh<5){
+    stationaryT+=3;
+    if(stationaryT>=30){
+      stationaryT=0; stopCnt++;
+      document.getElementById('dStp').textContent=stopCnt;
+      // find nearest stop
+      let near=null,minD=999;
+      (selLine||LINES[0]).stops.forEach(s=>{const d=hav(lat,lng,s.lat,s.lng);if(d<minD){minD=d;near=s;}});
+      toast('📍',`محطة: ${near?near.name:stopCnt}`,`وقوف رقم ${stopCnt}`);
+      speak(`وقوف في محطة ${near?near.name:stopCnt}`);
+    }
+  } else {stationaryT=0;}
+  document.getElementById('dSpd').textContent=kmh;
+  document.getElementById('dDst').textContent=totalDist.toFixed(1);
+  document.getElementById('gpsAcc').textContent=`±${Math.round(accuracy||0)}م`;
+  broadcast({type:'gps',lat,lng,spd:kmh,dist:totalDist.toFixed(1),stops:stopCnt,acc:Math.round(accuracy||0),ts:Date.now(),status:'live'});
+}
+
+function broadcast(data){connections.forEach(c=>{try{if(c.open)c.send(data);}catch(e){}});}
+
+function renderDriverStops(){
+  const line=selLine||LINES[0];
+  const w=document.getElementById('dStopsWrap');
+  w.innerHTML=`<div class="sec-lbl">محطات ${line.name}</div>`+
+    line.stops.map((s,i)=>`<div class="stop-item" id="dst${i}">
+      <div class="stop-dot" style="background:transparent;border:2px solid ${line.color};"></div>
+      <div style="flex:1;font-size:13px;font-weight:700;">${s.name}</div>
+      <div style="font-size:11px;color:var(--dim);">${i+1}/${line.stops.length}</div>
+    </div>`).join('');
+}
+
+// ════════════════════════════════════════════════
+//  PASSENGER GPS RECEIVE
+// ════════════════════════════════════════════════
+function getMyLocation(){
+  if(!navigator.geolocation)return;
+  navigator.geolocation.getCurrentPosition(pos=>{
+    myLL=[pos.coords.latitude,pos.coords.longitude];
+    const ico=L.divIcon({html:`<div style="width:20px;height:20px;background:#06b6d4;border-radius:50%;border:3px solid #fff;box-shadow:0 0 12px rgba(6,182,212,.8);"></div>`,iconSize:[20,20],iconAnchor:[10,10],className:''});
+    myMarker=L.marker(myLL,{icon:ico}).addTo(map).bindPopup('موقعك');
+  },()=>{},{enableHighAccuracy:true});
+}
+
+function updatePassengerGPS(d){
+  if(d.status==='stopped'){document.getElementById('pName').textContent='الرحلة انتهت';document.getElementById('pIco').textContent='⭕';return;}
+  const ll=[d.lat,d.lng];
+  busMarker.setLatLng(ll);
+  routeCoords.push(ll); if(routeCoords.length>400)routeCoords.shift();
+  routePolyline.setLatLngs(routeCoords);
+  document.getElementById('pIco').textContent='🟢';
+  document.getElementById('pName').textContent=`الحافلة تسير — ${d.spd} كم/س`;
+  document.getElementById('pSub').textContent=`مقطوع: ${d.dist} كم | دقة: ±${d.acc}م`;
+  document.getElementById('pSpd').textContent=`⚡ ${d.spd} كم/س`;
+  if(myLL){
+    const km=hav(myLL[0],myLL[1],d.lat,d.lng);
+    document.getElementById('pDist').textContent=`📍 ${km<1?(km*1000).toFixed(0)+'م':km.toFixed(2)+'كم'}`;
+    if(d.spd>0)document.getElementById('pEta').textContent=`⏱ ${Math.max(1,Math.round(km/(d.spd/60)))} د`;
+    triggerAlerts(km);
+  }
+  updatePassengerStopDistances(d.lat,d.lng);
+}
+
+function triggerAlerts(km){
+  if(km<1&&!alerts.km1){alerts.km1=true;toast('⚠️','الحافلة على بُعد كيلومتر!','استعد');speak('تنبيه! الحافلة اقتربت وستصل خلال دقائق. استعد للتوجه للمحطة.');document.getElementById('pCard').classList.add('alert');}
+  if(km<.5&&!alerts.m500){alerts.m500=true;toast('🔔','500 متر!','توجه للمحطة');speak('الحافلة على بُعد خمسمائة متر. توجه للمحطة الآن.');}
+  if(km<.08&&!alerts.here){alerts.here=true;toast('✅','الحافلة وصلت! 🚌','ارتقِ الآن');speak('الحافلة وصلت إلى محطتك. يمكنك الركوب الآن.');setTimeout(()=>{Object.keys(alerts).forEach(k=>alerts[k]=false);document.getElementById('pCard').classList.remove('alert');},90000);}
+}
+
+function renderPassengerStops(){
+  if(!selLine)return;
+  const w=document.getElementById('pStopsWrap');
+  w.innerHTML=`<div class="sec-lbl" style="margin-top:8px;">محطات ${selLine.name}</div>`+
+    selLine.stops.map((s,i)=>`<div class="stop-item" id="pst${i}">
+      <div class="stop-dot" style="background:transparent;border:2px solid ${i===0?'var(--green)':selLine.color};"></div>
+      <div style="flex:1;font-size:13px;font-weight:700;">${s.name}</div>
+      <div style="font-size:11px;color:var(--dim);" id="pstd${i}">—</div>
+    </div>`).join('');
+}
+
+function updatePassengerStopDistances(lat,lng){
+  if(!selLine)return;
+  selLine.stops.forEach((s,i)=>{
+    const d=hav(lat,lng,s.lat,s.lng);
+    const el=document.getElementById('pstd'+i); if(el)el.textContent=d<1?(d*1000).toFixed(0)+'م':d.toFixed(1)+'كم';
+    const item=document.getElementById('pst'+i);
+    if(item){
+      item.style.borderColor=d<0.12?'var(--green)':d<0.25?'var(--gold)':'var(--border)';
+      item.querySelector('.stop-dot').style.background=d<0.12?'var(--green)':d<0.25?'var(--gold)':'transparent';
+    }
+  });
+}
+
+// ════════════════════════════════════════════════
+//  SCHEDULE & RATING MODALS
+// ════════════════════════════════════════════════
+function showSchedule(){
+  if(!selLine){toast('⚠️','اختر خطاً أولاً','');return;}
+  const nowTime=()=>{const d=new Date();return`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;};
+  const nt=nowTime();
+  document.getElementById('schedContent').innerHTML=
+    `<div class="sec-lbl">${selLine.name} — ${selLine.route}</div>`+
+    selLine.schedule.map((t,i)=>{
+      const isPast=t<nt; const isNext=!isPast&&(i===selLine.schedule.findIndex(x=>x>=nt));
+      return`<div class="trip-item">
+        <div class="trip-time" style="background:${isPast?'rgba(61,84,112,.15)':isNext?'rgba(245,158,11,.15)':'rgba(16,185,129,.1)'};color:${isPast?'var(--dim)':isNext?'var(--gold)':'var(--green)'};">${t}</div>
+        <div style="flex:1;"><div style="font-size:13px;font-weight:700;">رحلة ${i+1}</div><div style="font-size:11px;color:var(--dim);margin-top:2px;">${selLine.stops[0].name} ← ${selLine.stops[selLine.stops.length-1].name}</div></div>
+        <div style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:7px;background:${isPast?'rgba(61,84,112,.1)':isNext?'rgba(245,158,11,.12)':'rgba(16,185,129,.1)'};color:${isPast?'var(--dim)':isNext?'var(--gold)':'var(--green)'};">${isPast?'منتهية':isNext?'القادمة':'لاحقاً'}</div>
+      </div>`;
+    }).join('');
+  document.getElementById('schedModal').style.display='block';
+}
+
+function showRate(){
+  userRating=0;
+  document.getElementById('rateContent').innerHTML=`
+    <div style="text-align:center;padding:20px 0;">
+      <div style="font-size:44px;margin-bottom:10px;">👨‍✈️</div>
+      <div style="font-size:16px;font-weight:900;">محمد أمين</div>
+      <div style="font-size:12px;color:var(--dim);margin-bottom:16px;">سائق الخط ${selLine?.id||1}</div>
+      <div id="mainStars" style="display:flex;gap:6px;justify-content:center;margin-bottom:8px;">
+        ${[1,2,3,4,5].map(i=>`<span onclick="setRating(${i})" style="font-size:34px;cursor:pointer;color:var(--dim);transition:.15s;" id="star${i}">★</span>`).join('')}
+      </div>
+      <div id="ratingLabel" style="font-size:13px;color:var(--dim);margin-bottom:20px;">اضغط لتقييم الرحلة</div>
+    </div>
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px;">
+      ${[['قيادة السائق','🚗'],['الالتزام بالمواعيد','⏱'],['نظافة الحافلة','✨'],['المعاملة','🤝']].map(([l,i])=>`
+        <div class="rate-category">
+          <span style="font-size:13px;">${i} ${l}</span>
+          <div style="display:flex;gap:3px;">${[1,2,3,4,5].map(n=>`<span style="font-size:16px;color:${n<=4?'var(--gold)':'var(--dim)'};">★</span>`).join('')}</div>
+        </div>`).join('')}
+    </div>
+    <textarea id="rateNote" placeholder="ملاحظات إضافية..." style="width:100%;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--text);font-family:'Cairo',sans-serif;font-size:13px;resize:none;outline:none;min-height:70px;direction:rtl;margin-bottom:12px;"></textarea>
+    <button onclick="submitRating()" style="width:100%;padding:14px;border-radius:13px;border:none;background:linear-gradient(135deg,var(--gold),#c47f0a);color:#000;font-family:'Cairo',sans-serif;font-size:15px;font-weight:800;cursor:pointer;">إرسال التقييم ⭐</button>`;
+  document.getElementById('rateModal').style.display='block';
+}
+
+function setRating(n){
+  userRating=n;
+  const lbls=['','رديئة 😞','مقبولة 😐','جيدة 🙂','ممتازة 😊','رائعة! 🤩'];
+  document.getElementById('ratingLabel').textContent=lbls[n];
+  document.getElementById('ratingLabel').style.color='var(--gold)';
+  [1,2,3,4,5].forEach(i=>document.getElementById('star'+i).style.color=i<=n?'var(--gold)':'var(--dim)');
+}
+
+function submitRating(){
+  if(!userRating){toast('⚠️','اختر عدد النجوم','');return;}
+  closeModal('rateModal');
+  toast('⭐','شكراً على تقييمك!',`${userRating} نجوم`);
+}
+
+function closeModal(id){document.getElementById(id).style.display='none';}
+
+// ════════════════════════════════════════════════
+//  ADMIN
+// ════════════════════════════════════════════════
+function initAdminApp(){
+  gotoApp('admin');
+}
+
+function renderAdminPanels(){
+  renderAdminStats();
+  renderAdminFleet();
+  renderAdminLines();
+}
+
+function aTab(btn,panelId){
+  document.querySelectorAll('.atab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  ['aStats','aFleet','aLines'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById(panelId).style.display='block';
+}
+
+function renderAdminStats(){
+  // Chart
+  const max=Math.max(...CHART_DATA.pass);
+  document.getElementById('chartWrap').innerHTML=`
+    <div class="chart-title">📊 الركاب بالساعة (اليوم)</div>
+    <div class="bars">${CHART_DATA.pass.map((v,i)=>`
+      <div class="bar-wrap">
+        <div class="bar-inner" style="height:${Math.round(56*(v/max))+8}px;background:rgba(6,182,212,.15);">
+          <div class="bar-fill" style="background:var(--cyan);height:100%;opacity:.8;"></div>
         </div>
+        <div class="bar-lbl">${CHART_DATA.lbls[i]}</div>
+      </div>`).join('')}
+    </div>
+    <div style="font-size:11px;color:var(--cyan);font-weight:700;margin-top:8px;">ذروة: ${Math.max(...CHART_DATA.pass)} ركاب</div>`;
+}
+
+function renderAdminFleet(){
+  const w=document.getElementById('aFleet');
+  w.innerHTML=FLEET.map(b=>{
+    const line=LINES.find(l=>l.id===b.line);
+    return`<div class="fleet-item">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+        <div style="font-size:26px;">🚌</div>
+        <div style="flex:1;"><div style="font-size:15px;font-weight:900;">${b.id}</div><div style="font-size:11px;color:var(--dim);">${b.driver} · ${line?.name}</div></div>
+        <div class="pill ${b.status==='live'?'p-live':'p-off'}"><div class="dot"></div>${b.status==='live'?'نشطة':'متوقفة'}</div>
+      </div>
+      <div style="display:flex;gap:7px;margin-bottom:10px;">
+        <div class="sbox" style="flex:1;"><div class="sv" style="font-size:15px;">${b.speed}</div><div class="sl">كم/س</div></div>
+        <div class="sbox" style="flex:1;"><div class="sv" style="font-size:15px;">${b.passengers}</div><div class="sl">ركاب</div></div>
+        <div class="sbox" style="flex:1;"><div class="sv" style="font-size:15px;">${b.rating}⭐</div><div class="sl">تقييم</div></div>
+        <div class="sbox" style="flex:1;"><div class="sv" style="font-size:15px;">${b.trips}</div><div class="sl">رحلة</div></div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="toast('📞','تواصل مع ${b.driver}','${b.id}')" class="abtn-sec">📞 تواصل</button>
+        <button onclick="toast('📊','تقرير ${b.id}','جارٍ الإنشاء...')" class="abtn-sec">📊 تقرير</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderAdminLines(){
+  const w=document.getElementById('aLines');
+  w.innerHTML=LINES.map(l=>`
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:15px;padding:14px;margin-bottom:10px;" id="lineEditor${l.id}">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <div style="width:40px;height:40px;border-radius:10px;background:${l.bg};color:${l.color};display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;flex-shrink:0;">${l.id}</div>
+        <div style="flex:1;"><div style="font-size:14px;font-weight:800;">${l.name}</div><div style="font-size:11px;color:var(--dim);">${l.route}</div></div>
+        <button onclick="toggleEdit(${l.id})" style="padding:5px 12px;border-radius:8px;border:1px solid ${l.color};background:${l.bg};color:${l.color};font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;cursor:pointer;" id="editBtn${l.id}">✏️ تعديل</button>
+      </div>
+      <div id="stopsList${l.id}">
+        ${renderStopsList(l)}
+      </div>
+      <div id="addStopForm${l.id}" style="display:none;display:flex;gap:8px;margin-top:8px;">
+        <input id="newStop${l.id}" placeholder="اسم المحطة الجديدة" style="flex:1;background:var(--s2);border:1px solid var(--border);border-radius:9px;padding:8px 12px;color:var(--text);font-family:'Cairo',sans-serif;font-size:13px;outline:none;direction:rtl;" onkeydown="if(event.key==='Enter')addStop(${l.id})">
+        <button onclick="addStop(${l.id})" style="padding:8px 14px;border-radius:9px;border:none;background:${l.color};color:#000;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">+ إضافة</button>
       </div>
     </div>`).join('');
 }
 
-function toggleLineEdit(id) {
-  editingLines[id] = !editingLines[id];
-  renderLines();
-  if(!editingLines[id]) toast('✅','تم حفظ التعديلات',`الخط ${id}`);
+function renderStopsList(l){
+  return l.stops.map((s,i)=>`
+    <div class="stop-edit" id="stopEdit_${l.id}_${s.id}">
+      <div style="width:22px;height:22px;border-radius:6px;background:${l.bg};color:${l.color};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;flex-shrink:0;">${i+1}</div>
+      <div style="flex:1;font-size:13px;font-weight:600;">${s.name}</div>
+      <button class="delBtn_${l.id}" onclick="removeStop(${l.id},'${s.id}')" style="display:none;width:24px;height:24px;border-radius:6px;border:none;background:rgba(239,68,68,.15);color:var(--red);cursor:pointer;font-size:14px;">×</button>
+    </div>`).join('');
 }
 
-function updateLineField(id, field, val) {
-  const l = LINES.find(l=>l.id===id);
-  if(l) l[field] = val;
-}
-
-function updateLineColor(id, color, dotEl) {
-  const l = LINES.find(l=>l.id===id);
-  if(!l) return;
-  l.color = color;
-  // make bg from color
-  const hex2rgb = h => [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
-  try { const [r,g,b]=hex2rgb(color); l.bg=`rgba(${r},${g},${b},.15)`; } catch(e) {}
-  // update dots
-  if(dotEl) {
-    dotEl.closest('.color-grid').querySelectorAll('.color-dot').forEach(d=>d.classList.remove('sel'));
-    dotEl.classList.add('sel');
-  }
-  const header=document.getElementById('lc'+id);
-  if(header){
-    header.querySelector('.line-num').style.background=l.bg;
-    header.querySelector('.line-num').style.color=color;
+let editingLine=null;
+function toggleEdit(lineId){
+  if(editingLine===lineId){
+    editingLine=null;
+    document.getElementById('addStopForm'+lineId).style.display='none';
+    document.querySelectorAll(`.delBtn_${lineId}`).forEach(b=>b.style.display='none');
+    document.getElementById('editBtn'+lineId).textContent='✏️ تعديل';
+  } else {
+    if(editingLine)toggleEdit(editingLine);
+    editingLine=lineId;
+    document.getElementById('addStopForm'+lineId).style.display='flex';
+    document.querySelectorAll(`.delBtn_${lineId}`).forEach(b=>b.style.display='flex');
+    document.getElementById('editBtn'+lineId).textContent='✓ حفظ';
   }
 }
 
-function updateStopName(lineId, stopId, name) {
-  const l = LINES.find(l=>l.id===lineId);
-  if(l){const s=l.stops.find(s=>s.id===stopId);if(s)s.name=name;}
-}
-
-function addStop(lineId) {
-  const inp = document.getElementById('ns'+lineId);
-  const name = inp.value.trim(); if(!name) return;
-  const l = LINES.find(l=>l.id===lineId);
-  if(!l) return;
-  const last = l.stops[l.stops.length-1];
-  l.stops.push({id:'s'+Date.now(),name,lat:last.lat+0.002,lng:last.lng+0.003});
-  inp.value = '';
-  refreshStops(l);
+function addStop(lineId){
+  const inp=document.getElementById('newStop'+lineId);
+  const name=inp.value.trim(); if(!name)return;
+  const line=LINES.find(l=>l.id===lineId);
+  const last=line.stops[line.stops.length-1];
+  line.stops.push({id:'s'+Date.now(),name,lat:last.lat+0.002,lng:last.lng+0.003});
+  inp.value='';
+  document.getElementById('stopsList'+lineId).innerHTML=renderStopsList(line);
+  document.querySelectorAll(`.delBtn_${lineId}`).forEach(b=>b.style.display='flex');
   toast('📍','تم إضافة المحطة',name);
 }
 
-function removeStop(lineId, stopId) {
-  const l = LINES.find(l=>l.id===lineId);
-  if(!l||l.stops.length<=2){toast('⚠️','الخط يحتاج محطتين على الأقل','');return;}
-  l.stops = l.stops.filter(s=>s.id!==stopId);
-  refreshStops(l);
+function removeStop(lineId,stopId){
+  const line=LINES.find(l=>l.id===lineId);
+  if(line.stops.length<=2){toast('⚠️','الخط يحتاج محطتين على الأقل','');return;}
+  line.stops=line.stops.filter(s=>s.id!==stopId);
+  document.getElementById('stopsList'+lineId).innerHTML=renderStopsList(line);
+  document.querySelectorAll(`.delBtn_${lineId}`).forEach(b=>b.style.display='flex');
   toast('🗑️','تم حذف المحطة','');
 }
 
-function refreshStops(l) {
-  const c = document.getElementById('stops'+l.id);
-  if(!c) return;
-  c.innerHTML = l.stops.map((s,i)=>`
-    <div class="stop-row" id="sr_${s.id}">
-      <div class="stop-num" style="background:${l.bg};color:${l.color};">${i+1}</div>
-      <input class="stop-inp" value="${s.name}" onchange="updateStopName(${l.id},'${s.id}',this.value)">
-      <button class="stop-del" onclick="removeStop(${l.id},'${s.id}')">×</button>
-    </div>`).join('');
+// ════════════════════════════════════════════════
+//  TAB SWITCHER
+// ════════════════════════════════════════════════
+function switchTab(btn,panelId){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');
+  ['dPanel','pPanel','aPanel'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById(panelId).style.display='block';
 }
 
-function addSchedule(lineId) {
-  const inp = document.getElementById('nt'+lineId);
-  const t = inp.value; if(!t) return;
-  const l = LINES.find(l=>l.id===lineId);
-  if(l&&!l.schedule.includes(t)){
-    l.schedule.push(t);
-    l.schedule.sort();
-    refreshSchedule(l);
-    toast('⏱','تم إضافة الموعد',t);
-  }
-  inp.value = '';
+// ════════════════════════════════════════════════
+//  VOICE
+// ════════════════════════════════════════════════
+function speak(txt){
+  if(!window.speechSynthesis)return;
+  window.speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(txt);
+  u.lang='ar-SA'; u.rate=0.88; u.pitch=1; u.volume=1;
+  const vs=window.speechSynthesis.getVoices();
+  const av=vs.find(v=>v.lang.startsWith('ar'));
+  if(av)u.voice=av;
+  window.speechSynthesis.speak(u);
 }
 
-function removeSchedule(lineId, time) {
-  const l = LINES.find(l=>l.id===lineId);
-  if(l){l.schedule=l.schedule.filter(t=>t!==time);refreshSchedule(l);}
-}
+function testVoice(){speak('مرحباً. الحافلة في طريقها إليك. يُرجى الاستعداد للركوب.');toast('🔊','يتم تشغيل الصوت','تنبيه صوتي عربي');}
 
-function refreshSchedule(l) {
-  const c = document.getElementById('sched'+l.id);
-  if(!c) return;
-  c.innerHTML = l.schedule.map(t=>`
-    <div class="sched-tag">${t}<button class="sched-del" onclick="removeSchedule(${l.id},'${t}')">×</button></div>`).join('');
-}
-
-// Add New Line
-function pickNewColor(color, dot) {
-  newLineColor = color;
-  document.querySelectorAll('#newLineColors .color-dot').forEach(d=>d.classList.remove('sel'));
-  dot.classList.add('sel');
-}
-
-function addNewLine() {
-  const name = document.getElementById('newLineName').value.trim();
-  const route = document.getElementById('newLineRoute').value.trim();
-  if(!name||!route){toast('⚠️','أدخل اسم الخط والمسار','');return;}
-  const newId = Math.max(...LINES.map(l=>l.id),0)+1;
-  const hex2rgb = h => {try{return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];}catch(e){return[245,158,11];}};
-  const [r,g,b] = hex2rgb(newLineColor);
-  LINES.push({
-    id:newId, name, color:newLineColor, bg:`rgba(${r},${g},${b},.15)`, route,
-    schedule:['07:00','09:00','12:00','15:00','18:00'],
-    stops:[
-      {id:'ns1',name:'المحطة الأولى',lat:36.7372+newId*0.005,lng:3.0869},
-      {id:'ns2',name:'المحطة الأخيرة',lat:36.7372+newId*0.005,lng:3.1150},
-    ]
-  });
-  document.getElementById('newLineName').value='';
-  document.getElementById('newLineRoute').value='';
-  renderLines();
-  toast('✅','تم إضافة الخط الجديد',name);
-}
-
-function deleteLine(id) {
-  showConfirm('حذف الخط','هل تريد حذف هذا الخط؟ لا يمكن التراجع.',()=>{
-    LINES=LINES.filter(l=>l.id!==id);
-    renderLines();
-    toast('🗑️','تم حذف الخط','');
-  });
-}
-
-// ════════════════════════════════════════
-//  DESIGN MANAGEMENT
-// ════════════════════════════════════════
-function renderColorRows() {
-  const c = document.getElementById('colorRows');
-  c.innerHTML = Object.entries(COLORS).map(([key,val])=>`
-    <div class="color-row">
-      <div>
-        <div class="color-lbl">${COLOR_LABELS[key]||key}</div>
-        <div style="font-size:11px;color:var(--dim);font-family:'Fira Code',monospace;">${key}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div style="font-size:11px;color:var(--text2);font-family:'Fira Code',monospace;">${val}</div>
-        <input type="color" value="${val.startsWith('#')?val:'#101828'}"
-          onchange="updateColor('${key}',this.value)"
-          style="width:36px;height:36px;border-radius:8px;border:1px solid var(--border);cursor:pointer;background:none;padding:2px;">
-      </div>
-    </div>`).join('');
-}
-
-function updateColor(key, val) {
-  COLORS[key] = val;
-  document.documentElement.style.setProperty(key, val);
-}
-
-function applyColors() {
-  Object.entries(COLORS).forEach(([k,v])=>document.documentElement.style.setProperty(k,v));
-  toast('✅','تم تطبيق الألوان','ستظهر في الملف المُصدَّر');
-}
-
-function resetColors() {
-  COLORS = {'--bg':'#060b14','--s1':'#080e1a','--s2':'#0c1422','--card':'#101828','--gold':'#f59e0b','--cyan':'#06b6d4','--green':'#10b981','--red':'#ef4444','--purple':'#8b5cf6','--text':'#e2eaf4','--text2':'#8ba4be'};
-  Object.entries(COLORS).forEach(([k,v])=>document.documentElement.style.setProperty(k,v));
-  renderColorRows();
-  toast('↩️','تم إعادة الضبط','الألوان الافتراضية');
-}
-
-function updateRadius(val) {
-  document.documentElement.style.setProperty('--r', val+'px');
-}
-
-function applyAppInfo() {
-  toast('✅','تم حفظ معلومات التطبيق','ستظهر في الملف المُصدَّر');
-}
-
-// ════════════════════════════════════════
-//  CODE EDITOR
-// ════════════════════════════════════════
-function generateAppCode() {
-  return `// ═══════════════════════════════════════
-// بيانات الخطوط — نقـلي
-// عدّل هذا القسم لتغيير الخطوط والمحطات
-// ═══════════════════════════════════════
-
-let LINES = ${JSON.stringify(LINES, null, 2)};
-
-// ═══════════════════════════════════════
-// ألوان النظام
-// ═══════════════════════════════════════
-
-const THEME = ${JSON.stringify(COLORS, null, 2)};
-
-// ═══════════════════════════════════════
-// معلومات التطبيق
-// ═══════════════════════════════════════
-
-const APP_NAME = "${document.getElementById('appName')?.value||'نقـلي'}";
-const COMPANY  = "${document.getElementById('companyName')?.value||'شركة النقل'}";
-const APP_ICON = "${document.getElementById('appEmoji')?.value||'🚌'}";
-`;
-}
-
-function onCodeEdit(el) {
-  codeHistory.push(el.value);
-  if(codeHistory.length>50) codeHistory.shift();
-  updateLineCount();
-}
-
-function updateLineCount() {
-  const code = document.getElementById('codeEditor').value;
-  document.getElementById('lineCount').textContent = code.split('\n').length + ' سطر';
-}
-
-function codeUndo() {
-  if(codeHistory.length>1){
-    codeHistory.pop();
-    document.getElementById('codeEditor').value=codeHistory[codeHistory.length-1];
-    updateLineCount();
-  }
-}
-
-function findInCode() {
-  const txt = document.getElementById('searchTxt').value;
-  if(!txt){toast('⚠️','أدخل نص البحث','');return;}
-  const code = document.getElementById('codeEditor').value;
-  const count = (code.match(new RegExp(txt.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g'))||[]).length;
-  document.getElementById('searchResult').textContent = count>0?`✅ وجد ${count} نتيجة`:'❌ لم يجد نتيجة';
-}
-
-function replaceInCode() {
-  const s=document.getElementById('searchTxt').value;
-  const r=document.getElementById('replaceTxt').value;
-  if(!s)return;
-  const el=document.getElementById('codeEditor');
-  const idx=el.value.indexOf(s);
-  if(idx>=0){el.value=el.value.slice(0,idx)+r+el.value.slice(idx+s.length);toast('✅','تم الاستبدال','مرة واحدة');}
-  else toast('❌','لم يجد النص','');
-}
-
-function replaceAllInCode() {
-  const s=document.getElementById('searchTxt').value;
-  const r=document.getElementById('replaceTxt').value;
-  if(!s)return;
-  const el=document.getElementById('codeEditor');
-  const reg=new RegExp(s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g');
-  const count=(el.value.match(reg)||[]).length;
-  el.value=el.value.replace(reg,r);
-  toast('✅',`تم استبدال ${count} نتيجة`,'');
-}
-
-function applyCode() {
-  try {
-    // Extract LINES from code
-    const code=document.getElementById('codeEditor').value;
-    const match=code.match(/let LINES\s*=\s*(\[[\s\S]*?\]);/);
-    if(match){LINES=JSON.parse(match[1]);renderLines();toast('✅','تم تطبيق الكود','البيانات محدّثة');}
-    else toast('⚠️','لم يجد LINES في الكود','');
-  } catch(e){toast('❌','خطأ في الكود',e.message);}
-}
-
-function copyCode() {
-  navigator.clipboard?.writeText(document.getElementById('codeEditor').value);
-  toast('📋','تم نسخ الكود','');
-}
-
-function formatCode() {
-  const el=document.getElementById('codeEditor');
-  try{
-    // Basic formatting
-    let code=el.value;
-    code=code.replace(/,\s*\n\s*/g,',\n  ');
-    el.value=code;
-    toast('✨','تم تنسيق الكود','');
-  }catch(e){toast('❌','خطأ',e.message);}
-}
-
-function quickEdit(type) {
-  const el=document.getElementById('codeEditor');
-  if(type==='lines'){
-    el.value=generateAppCode();
-    toast('✅','تم تحديث بيانات الخطوط في الكود','');
-  } else if(type==='colors'){
-    el.value=`// ألوان النظام\nconst THEME = ${JSON.stringify(COLORS,null,2)};`;
-    toast('✅','تم تحديث الألوان','');
-  } else {
-    el.value=`// معلومات التطبيق\nconst APP_NAME="${document.getElementById('appName')?.value||'نقـلي'}";\nconst COMPANY="${document.getElementById('companyName')?.value||'شركة النقل'}";\nconst APP_ICON="${document.getElementById('appEmoji')?.value||'🚌'}";`;
-    toast('✅','تم تحديث المعلومات','');
-  }
-  updateLineCount();
-}
-
-function insertSnippet(type) {
-  const snippets={
-    stop:`{id:"s${Date.now()}",name:"محطة جديدة",lat:36.7372,lng:3.0869}`,
-    line:`{id:${LINES.length+1},name:"الخط 0${LINES.length+1}",color:"#f59e0b",bg:"rgba(245,158,11,.15)",route:"من ↔ إلى",schedule:["07:00","12:00","17:00"],stops:[]}`,
-    bus:`{id:"BUS-0${Date.now()%10}",line:1,driver:"اسم السائق",status:"live",speed:0,passengers:0,rating:5.0,trips:0}`,
-    alert:`toast('🔔','تنبيه جديد','وصف التنبيه');`,
-  };
-  const el=document.getElementById('codeEditor');
-  const pos=el.selectionStart;
-  el.value=el.value.slice(0,pos)+snippets[type]+el.value.slice(pos);
-  toast('📌','تم إدراج الكود','');
-}
-
-// ════════════════════════════════════════
-//  EXPORT
-// ════════════════════════════════════════
-function generateFullHTML() {
-  const linesJson=JSON.stringify(LINES);
-  const appName=document.getElementById('appName')?.value||'نقـلي';
-  const emoji=document.getElementById('appEmoji')?.value||'🚌';
-  // Insert updated LINES into the naqli app
-  // This is a placeholder — in production this reads the actual naqli file
-  return `<!-- نقـلي — تم التصدير من لوحة التطوير المحمولة -->\n<!-- الخطوط: ${LINES.length} | المحطات: ${LINES.reduce((s,l)=>s+l.stops.length,0)} -->\n<!-- التطبيق جاهز للنشر على GitHub Pages -->\n\n` +
-    `<script>/* LINES_DATA */\nlet LINES = ${linesJson};\n<\/script>`;
-}
-
-function exportApp() {
-  const content=generateFullHTML();
-  const blob=new Blob([content],{type:'text/html;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url; a.download='naqli-updated.html';
-  document.body.appendChild(a); a.click();
-  document.body.removeChild(a); URL.revokeObjectURL(url);
-  toast('💾','تم تحميل الملف','naqli-updated.html');
-}
-
-function copyFullCode() {
-  const content=generateFullHTML();
-  navigator.clipboard?.writeText(content);
-  toast('📋','تم نسخ الكود الكامل','الصقه في GitHub');
-}
-
-function updateFileStats() {
-  const totalStops=LINES.reduce((s,l)=>s+l.stops.length,0);
-  const totalTrips=LINES.reduce((s,l)=>s+l.schedule.length,0);
-  document.getElementById('fileStats').innerHTML=`
-    🗺️ عدد الخطوط: <b style="color:var(--gold)">${LINES.length}</b><br>
-    📍 إجمالي المحطات: <b style="color:var(--cyan)">${totalStops}</b><br>
-    ⏱ إجمالي الرحلات اليومية: <b style="color:var(--green)">${totalTrips}</b><br>
-    🎨 ألوان مخصصة: <b style="color:var(--purple)">${Object.keys(COLORS).length}</b>
-  `;
-}
-
-// ════════════════════════════════════════
+// ════════════════════════════════════════════════
 //  UTILS
-// ════════════════════════════════════════
+// ════════════════════════════════════════════════
+function centerBus(){if(busMarker&&map)map.panTo(busMarker.getLatLng());}
+
+// ════════════════════════════════════════════════
+//  GOOGLE MAPS INTEGRATION
+// ════════════════════════════════════════════════
+
+// 1. فتح Google Maps على موقع الحافلة
+function openGoogleMaps(){
+  if(!busMarker){toast('⚠️','انتظر بيانات الحافلة','');return;}
+  const ll=busMarker.getLatLng();
+  window.open(`https://www.google.com/maps?q=${ll.lat},${ll.lng}&z=16&t=m`,'_blank');
+}
+
+// 2. فتح مسار من موقعي للحافلة
+function openGoogleMapsRoute(){
+  if(!busMarker){toast('⚠️','انتظر بيانات الحافلة','');return;}
+  const bl=busMarker.getLatLng();
+  let url;
+  if(myLL){
+    url=`https://www.google.com/maps/dir/${myLL[0]},${myLL[1]}/${bl.lat},${bl.lng}`;
+  } else {
+    url=`https://www.google.com/maps?q=${bl.lat},${bl.lng}&z=16`;
+  }
+  window.open(url,'_blank');
+}
+
+// 3. مشاركة موقع الحافلة الحي
+function shareGoogleMapsLive(){
+  if(!busMarker){toast('⚠️','انتظر بيانات الحافلة','');return;}
+  const ll=busMarker.getLatLng();
+  const url=`https://www.google.com/maps?q=${ll.lat},${ll.lng}&z=16`;
+  const msg=`📍 موقع الحافلة الآن:\n${url}`;
+  if(navigator.share){navigator.share({title:'موقع الحافلة 🚌',text:msg});}
+  else{navigator.clipboard?.writeText(url);toast('📋','تم نسخ رابط Google Maps','');}
+}
+
+// 4. تحديث رابط Google Maps تلقائياً
+let gmapsInterval=null;
+function toggleGoogleMapsTracking(){
+  const btn=document.getElementById('gmapsTrackBtn');
+  if(gmapsInterval){
+    clearInterval(gmapsInterval); gmapsInterval=null;
+    if(btn){btn.textContent='🗺️ تتبع Maps';btn.style.background='';}
+    toast('⏹','إيقاف تتبع Google Maps','');
+  } else {
+    if(!busMarker){toast('⚠️','انتظر بيانات الحافلة','');return;}
+    if(btn){btn.textContent='⏹ إيقاف Maps';btn.style.background='rgba(16,185,129,.2)';}
+    gmapsInterval=setInterval(()=>{
+      if(!busMarker)return;
+      const ll=busMarker.getLatLng();
+      const liveUrl=`https://www.google.com/maps?q=${ll.lat},${ll.lng}&z=17&t=m`;
+      const linkEl=document.getElementById('gmapsLiveLink');
+      if(linkEl){linkEl.href=liveUrl;linkEl.textContent=`${ll.lat.toFixed(5)}, ${ll.lng.toFixed(5)}`;}
+    },3000);
+    toast('🗺️','تتبع Google Maps نشط','يتحدث كل 3 ثوانٍ');
+    openGoogleMaps();
+  }
+}
+
+function hav(la1,lo1,la2,lo2){
+  const R=6371,r=Math.PI/180;
+  const a=Math.sin(((la2-la1)*r)/2)**2+Math.cos(la1*r)*Math.cos(la2*r)*Math.sin(((lo2-lo1)*r)/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function shareCode(){
+  const code=document.getElementById('driverCode')?.textContent||myPeerId;
+  if(navigator.share){navigator.share({title:'نقـلي 🚌',text:`رمز رحلتي: ${code}\nافتح تطبيق نقـلي وأدخل هذا الرمز لتتابع الحافلة مباشرة!`});}
+  else{navigator.clipboard?.writeText(code);toast('📋','تم نسخ الرمز',code);}
+}
+
 let toastTimer;
 function toast(ico,txt,sub){
   ['tIco','tTxt','tSub'].forEach((id,i)=>document.getElementById(id).textContent=[ico,txt,sub][i]);
   const t=document.getElementById('toast');
   t.classList.add('show'); clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>t.classList.remove('show'),3000);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),3500);
 }
 
-function showConfirm(title,msg,cb){
-  document.getElementById('confirmTitle').textContent=title;
-  document.getElementById('confirmMsg').textContent=msg;
-  document.getElementById('confirmYes').onclick=()=>{cb();closeConfirm();};
-  document.getElementById('confirm').style.display='flex';
-}
-function closeConfirm(){document.getElementById('confirm').style.display='none';}
+window.speechSynthesis?.getVoices();
+window.speechSynthesis?.addEventListener?.('voiceschanged',()=>window.speechSynthesis.getVoices());
 </script>
 </body>
 </html>
